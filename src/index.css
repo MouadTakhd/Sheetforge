@@ -1,0 +1,464 @@
+/* app.css */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+
+@custom-variant dark (&:is(.dark *));
+
+@config "../tailwind.config.ts";
+
+/* -----------------------------
+   BASE RESET
+------------------------------*/
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background);
+    color: var(--foreground);
+  overflow: auto;
+
+  }
+
+  body {
+    @apply antialiased bg-background text-foreground;
+    overflow-x: hidden;
+    font-family: var(--font-sans);
+  }
+
+ * {
+  box-sizing: border-box;
+}
+}
+
+/* -----------------------------
+   UTILITIES
+------------------------------*/
+@utility glass {
+  background: var(--card);
+  border: 1px solid var(--border);
+}
+
+/* -----------------------------
+   THEME TOKENS
+------------------------------*/
+@theme inline {
+  --font-sans: 'Geist Variable', 'Inter', sans-serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-destructive: var(--destructive);
+
+  --radius: 0.9rem;
+}
+:root {
+  --background: oklch(0.99 0.01 140);
+  --foreground: oklch(0.24 0.02 145);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.24 0.02 145);
+
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.24 0.02 145);
+
+  --primary: oklch(0.62 0.19 145);
+  --primary-foreground: white;
+
+  --secondary: oklch(0.95 0.02 145);
+  --secondary-foreground: oklch(0.24 0.02 145);
+
+  --accent: oklch(0.92 0.04 145);
+  --accent-foreground: oklch(0.24 0.02 145);
+
+  --muted: oklch(0.97 0.01 145);
+  --muted-foreground: oklch(0.45 0.01 145);
+
+  --border: oklch(0.9 0.01 145);
+  --input: oklch(0.96 0.01 145);
+  --ring: oklch(0.62 0.19 145);
+}
+.dark {
+  --background: oklch(0.14 0.015 145);
+  --foreground: oklch(0.96 0.01 145);
+
+  --card: oklch(0.18 0.015 145);
+  --card-foreground: oklch(0.96 0.01 145);
+
+  --popover: oklch(0.18 0.015 145);
+  --popover-foreground: oklch(0.96 0.01 145);
+
+  --primary: oklch(0.7 0.18 145);
+  --primary-foreground: black;
+
+  --secondary: oklch(0.22 0.015 145);
+  --secondary-foreground: white;
+
+  --accent: oklch(0.24 0.03 145);
+  --accent-foreground: white;
+
+  --muted: oklch(0.2 0.015 145);
+  --muted-foreground: oklch(0.72 0.01 145);
+
+  --border: oklch(0.28 0.015 145);
+  --input: oklch(0.22 0.015 145);
+  --ring: oklch(0.7 0.18 145);
+}
+
+/* ---------------------------------
+   AUTH PAGE ANIMATIONS + EFFECTS
+----------------------------------*/
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes badgePop {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(6px);
+  }
+  70% {
+    transform: scale(1.06) translateY(-1px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes orb1 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(30px, -20px) scale(1.08);
+  }
+  66% {
+    transform: translate(-20px, 15px) scale(0.95);
+  }
+}
+
+@keyframes orb2 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(-25px, 20px) scale(1.05);
+  }
+  66% {
+    transform: translate(20px, -15px) scale(0.97);
+  }
+}
+
+@keyframes orb3 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(15px, 25px) scale(1.1);
+  }
+}
+
+@keyframes bg-shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes themePop {
+  0% {
+    transform: scale(0.7) rotate(-20deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15) rotate(5deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes successPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+/* ---------------------------------
+   ANIMATION UTILITIES
+----------------------------------*/
+
+.anim-fade-slide {
+  animation: fadeSlideUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.anim-fade {
+  animation: fadeIn 0.4s ease both;
+}
+
+.anim-badge {
+  animation: badgePop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.anim-theme-pop {
+  animation: themePop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.anim-bounce-in {
+  animation: badgePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ---------------------------------
+   FLOATING ORBS
+----------------------------------*/
+
+.orb-1 {
+  animation: orb1 9s ease-in-out infinite;
+}
+
+.orb-2 {
+  animation: orb2 11s ease-in-out infinite;
+}
+
+.orb-3 {
+  animation: orb3 13s ease-in-out infinite;
+}
+
+/* ---------------------------------
+   GRADIENT TEXT
+----------------------------------*/
+
+.gradient-text {
+  background: linear-gradient(
+    135deg,
+    #6366f1 0%,
+    #a855f7 35%,
+    #ec4899 65%,
+    #6366f1 100%
+  );
+
+  background-size: 200% auto;
+
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+
+  animation: bg-shimmer 4s linear infinite;
+}
+
+/* ---------------------------------
+   THEME TOGGLE
+----------------------------------*/
+
+.theme-pill {
+  transition:
+    background 0.2s,
+    box-shadow 0.2s,
+    transform 0.15s;
+}
+
+.theme-pill:hover {
+  transform: scale(1.06);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
+}
+
+.theme-pill:active {
+  transform: scale(0.94);
+}
+
+/* ---------------------------------
+   SUBMIT BUTTON
+----------------------------------*/
+
+.submit-btn {
+  transition:
+    transform 0.15s,
+    box-shadow 0.2s,
+    filter 0.2s;
+}
+
+.submit-btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+  box-shadow: 0 8px 24px -4px rgba(99, 102, 241, 0.4);
+}
+
+.submit-btn:not(:disabled):active {
+  transform: translateY(0);
+}
+
+.submit-success {
+  animation: successPulse 0.6s ease;
+}
+/* ---------------------------------
+   LOADER ANIMATIONS
+----------------------------------*/
+
+@keyframes shimmer-slide {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes float-up {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin-smooth {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes scale-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Utility classes */
+.animate-shimmer {
+  animation: shimmer-slide 2s infinite;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-float-up {
+  animation: float-up 0.5s ease-out;
+}
+
+.animate-spin-smooth {
+  animation: spin-smooth 1s linear infinite;
+}
+
+.animate-scale-pulse {
+  animation: scale-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ---------------------------------
+   CUSTOM SCROLLBARS & UTILITIES
+----------------------------------*/
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 99px;
+  transition: background 0.2s;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+@keyframes grid-drift {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(32px);
+  }
+}
+
+.animated-grid {
+  animation: grid-drift 12s linear infinite;
+}

@@ -1,0 +1,48 @@
+# dependencies
+node_modules
+.pnp
+.pnp.js
+
+# build output
+dist
+dist-ssr
+build
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# environment files
+.env
+.env.local
+.env.*.local
+
+# Vite / cache
+.vite
+.cache
+
+# TanStack Router generated files (optional but recommended)
+routeTree.gen.ts
+
+# IDEs
+.vscode
+.idea
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo
+#tanstack
+.tanstack/tmp
+
+# coverage
+coverage
+
+# optional: testing
+cypress/screenshots
+cypress/videos
