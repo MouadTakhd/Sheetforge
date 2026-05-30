@@ -1,4 +1,4 @@
-# Excel Converter — Portfolio Project
+# Sheetforge — Portfolio Project
 
 # Overview
 
@@ -16,7 +16,7 @@ The platform is designed as a lightweight SaaS-style portfolio project with a mo
 
 # Main Features
 
-## Excel Converter
+## Sheetforge
 
 ### Supported Files
 
