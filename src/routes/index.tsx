@@ -3,7 +3,7 @@ import { createFileRoute, redirect } from '@tanstack/react-router'
 export const Route = createFileRoute('/')({
   head: () => ({
     meta: [
-      { title: 'Excel Converter | Mouad Workspace' },
+      { title: 'Sheetforge | Mouad Workspace' },
       { name: 'description', content: 'Convert and manage Excel files easily.' },
       { name: 'robots', content: 'noindex' },
     ],

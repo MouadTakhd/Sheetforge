@@ -150,7 +150,7 @@ export function AuthPage() {
           </div>
           <div>
             <h1 className="text-4xl font-black tracking-tight bg-gradient-to-r from-foreground via-primary to-primary/80 bg-clip-text text-transparent">
-              Excel Converter
+              Sheetforge
             </h1>
             <p className="text-muted-foreground text-sm mt-1">
               {mode === 'signin'
