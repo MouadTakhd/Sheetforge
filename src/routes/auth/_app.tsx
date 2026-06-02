@@ -1,354 +1,178 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+// src/routes/auth._app.tsx
+import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
-import { Eye, EyeOff, Lock, Mail, Loader2, Sun, Moon, Check, Sparkles } from 'lucide-react'
+import { Sun, Moon, FileSpreadsheet, Zap, ShieldCheck, Wand2, ArrowLeft } from 'lucide-react'
 import { useTheme } from '@/components/ui/theme-provider'
-import { generateToken, storeToken } from '@/utils/token'
-import { Loader } from '@/components/ui/loader'
+import { SignInForm } from '@/components/auth/SignIn'
+import { SignUpForm } from '@/components/auth/SignUp'
+import { OtpVerificationForm } from '@/components/auth/OtpVerificationForm'
 
 export const Route = createFileRoute('/auth/_app')({
   component: AuthPage,
 })
 
-/* ─── Data ─── */
 const FEATURES = [
-  { icon: '⚡', label: 'Fast & Reliable' },
-  { icon: '🔒', label: 'Secure' },
-  { icon: '✨', label: 'Modern UI' },
+  { icon: Zap, label: 'Fast & Reliable Conversion', iconClass: 'text-amber-500' },
+  { icon: ShieldCheck, label: 'Bank-Grade Layer Security', iconClass: 'text-emerald-500' },
+  { icon: Wand2, label: 'Tailored Native Configs', iconClass: 'text-indigo-500' },
 ] as const
 
-/* ─── Page ─── */
 export function AuthPage() {
-  const navigate = useNavigate()
+  const [mode, setMode] = useState<'signin' | 'signup' | 'verify'>('signin')
+  const [pendingEmail, setPendingEmail] = useState('')
   const { theme, setTheme } = useTheme()
 
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin')
-  const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
-  const [isSigningOut, setIsSigningOut] = useState(false)
-  const [iconKey, setIconKey] = useState(0)
-
-  const [form, setForm] = useState({ email: '', password: '', name: '' })
-
-  function toggleTheme() {
-    setTheme(theme === 'dark' ? 'light' : 'dark')
-    setIconKey(k => k + 1)
-  }
-
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
-    setError(null)
-  }
-
-  function switchMode(next: 'signin' | 'signup') {
-    setMode(next)
-    setError(null)
-    setForm({ email: '', password: '', name: '' })
-  }
-
-  async function handleSignOut() {
-    setIsSigningOut(true)
-    await new Promise(res => setTimeout(res, 1200))
-    setIsSigningOut(false)
-    switchMode('signin')
-    setSuccess(false)
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError(null)
-
-    if (!form.email || !form.password) {
-      setError('Please fill in all required fields.')
-      return
-    }
-    if (mode === 'signup' && !form.name) {
-      setError('Please enter your full name.')
-      return
-    }
-
-    setIsLoading(true)
-
-    try {
-      // Simulate API call
-      await new Promise(res => setTimeout(res, 1400))
-
-      // Generate token
-      const newToken = generateToken()
-      storeToken(newToken)
-
-      setSuccess(true)
-      await new Promise(res => setTimeout(res, 800))
-      navigate({ to: '/' })
-    } catch (err) {
-      setError('An error occurred. Please try again.')
-      setIsLoading(false)
-      console.error(err)
-    }
-  }
-
-  // Show signing out loader
-  if (isSigningOut) {
-    return <Loader title="Signing out" subtitle="See you soon..." size="md" />
-  }
-
-  // Show success loader
-  if (success) {
-    return <Loader title="All set!" subtitle="Redirecting..." isSuccess={true} size="lg" />
+  function handleSignUpSuccess(email: string) {
+    setPendingEmail(email)
+    setMode('verify')
   }
 
   return (
-    <main className="relative min-h-screen flex flex-col items-center justify-center px-4 overflow-hidden">
-      {/* Gradient orbs */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-        <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-gradient-to-br from-primary/15 to-transparent blur-3xl animate-pulse" />
-        <div className="absolute -bottom-24 -right-24 w-80 h-80 rounded-full bg-gradient-to-tl from-accent/15 to-transparent blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-gradient-to-b from-primary/10 to-transparent blur-2xl animate-pulse" style={{ animationDelay: '0.5s' }} />
-      </div>
+    <main className="min-h-screen w-full flex bg-background text-foreground md:overflow-hidden font-sans">
+      
+      {/* ─── LEFT SIDE: INTERACTIVE FORM NODE (SCROLLABLE ONLY ON MOBILE) ─── */}
+      <section className="w-full md:w-[50%] lg:w-[45%] xl:w-[38%] min-h-screen md:h-screen flex flex-col justify-between p-6 sm:p-10 lg:p-14 bg-background border-r border-border/60 shrink-0 relative z-10 overflow-y-auto pattern-fallback">
+        
+        {/* Top Navigation Row */}
+        <div className="flex items-center justify-between w-full mb-8 md:mb-0">
+          {mode === 'verify' ? (
+            <button
+              onClick={() => setMode('signup')}
+              className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" /> Back to Sign Up
+            </button>
+          ) : (
+            <div className="flex items-center gap-2 md:opacity-0 pointer-events-none transition-opacity">
+              <div className="flex items-center justify-center p-1.5 rounded-lg bg-primary text-primary-foreground">
+                <FileSpreadsheet className="h-4 w-4" />
+              </div>
+              <span className="font-extrabold text-base tracking-tight">Sheetforge</span>
+            </div>
+          )}
+          
+          <button
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="flex items-center justify-center h-8 w-8 rounded-lg border border-border/80 bg-background hover:bg-muted transition-colors"
+            aria-label="Toggle structural interface theme"
+          >
+            {theme === 'dark' ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-primary" />}
+          </button>
+        </div>
 
-      {/* Grid pattern */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-30" aria-hidden>
-        <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
-              <path d="M 32 0 L 0 0 0 32" fill="none" stroke="currentColor" strokeWidth="0.5" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#grid)" />
-        </svg>
-      </div>
-
-      {/* Theme toggle pill — top right */}
-      <div className="absolute top-5 right-5 anim-fade" style={{ animationDelay: '0.05s' }}>
-        <button
-          onClick={toggleTheme}
-          aria-label="Toggle theme"
-          className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border/50 bg-background/80 backdrop-blur-sm text-xs font-medium text-muted-foreground hover:text-foreground hover:border-border/80 transition-all duration-200"
-        >
-          <span key={iconKey} className="anim-theme-pop">
-            {theme === 'dark' ? (
-              <Sun className="h-3.5 w-3.5 text-amber-400" />
-            ) : (
-              <Moon className="h-3.5 w-3.5 text-primary/60" />
-            )}
-          </span>
-          <span className="hidden sm:inline">{theme === 'dark' ? 'Light' : 'Dark'}</span>
-        </button>
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10 w-full max-w-md space-y-6">
-        {/* Branding */}
-        <div className="text-center space-y-4 anim-fade-slide" style={{ animationDelay: '0s' }}>
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-primary via-primary to-primary/80 dark:from-primary/80 dark:via-primary dark:to-primary/70 shadow-lg shadow-primary/30 dark:shadow-primary/20 mb-2">
-            <span className="text-white text-2xl font-black">E</span>
-          </div>
-          <div>
-            <h1 className="text-4xl font-black tracking-tight bg-gradient-to-r from-foreground via-primary to-primary/80 bg-clip-text text-transparent">
-              Sheetforge
+        {/* Central Form Wrapper Container */}
+        <div className="w-full my-auto space-y-6 max-w-[420px] mx-auto py-4 sm:py-6">
+          <div className="space-y-2">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight leading-none">
+              {mode === 'signin' && 'Welcome back 👋'}
+              {mode === 'signup' && 'Create an account ✨'}
+              {mode === 'verify' && 'Verify your email 🛡️'}
             </h1>
-            <p className="text-muted-foreground text-sm mt-1">
-              {mode === 'signin'
-                ? 'Welcome back to your workspace'
-                : 'Start converting your files today'}
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {mode === 'signin' && 'Enter your credentials to manage workspace files.'}
+              {mode === 'signup' && 'Get started with automated document mapping layers.'}
+              {mode === 'verify' && `We sent a security matrix code sequence to ${pendingEmail}.`}
             </p>
+          </div>
+
+          {/* Segmented Controller Mode Switcher */}
+          {mode !== 'verify' && (
+            <div className="flex p-1 rounded-xl bg-muted/60 border border-border/20 w-full shadow-sm">
+              <button
+                type="button"
+                onClick={() => setMode('signin')}
+                className={`flex-1 py-2 rounded-lg text-xs font-extrabold transition-all ${mode === 'signin' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                Sign In
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('signup')}
+                className={`flex-1 py-2 rounded-lg text-xs font-extrabold transition-all ${mode === 'signup' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                Sign Up
+              </button>
+            </div>
+          )}
+
+          {/* Dynamic Content Panel Viewport */}
+          <div className="w-full overflow-x-hidden">
+            {mode === 'signin' && <SignInForm />}
+            {mode === 'signup' && <SignUpForm onSignUpSuccess={handleSignUpSuccess} />}
+            {mode === 'verify' && <OtpVerificationForm email={pendingEmail} onVerificationComplete={() => setMode('signin')} />}
           </div>
         </div>
 
-        {/* Features list */}
-        <div className="grid grid-cols-3 gap-3 px-2 anim-fade-slide" style={{ animationDelay: '0.08s' }}>
-          {FEATURES.map(({ icon, label }) => (
-            <div
-              key={label}
-              className="flex flex-col items-center gap-1.5 p-3 rounded-lg border border-border/30 bg-card/50 hover:bg-card/80 hover:border-border/50 transition-all duration-200"
-            >
-              <span className="text-xl">{icon}</span>
-              <span className="text-xs font-medium text-muted-foreground text-center">{label}</span>
+        {/* Unified Bottom Footer Frame */}
+        <div className="text-center pt-6 md:pt-4 border-t border-border/30 w-full max-w-[420px] mx-auto mt-8 md:mt-0">
+          {mode !== 'verify' ? (
+            <p className="text-xs text-muted-foreground font-medium">
+              {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
+              <button
+                type="button"
+                onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
+                className="text-primary font-bold hover:underline underline-offset-4 ml-0.5 transition-all"
+              >
+                {mode === 'signin' ? 'Sign up here' : 'Log in here'}
+              </button>
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground font-medium">
+              Didn't receive code?{' '}
+              <button type="button" className="text-primary font-bold hover:underline transition-all">
+                Resend security token
+              </button>
+            </p>
+          )}
+        </div>
+      </section>
+
+      {/* ─── RIGHT SIDE: BRANDING GRID WALL (HIDDEN ON TABLET/MOBILE) ─── */}
+      <section className="hidden md:flex flex-1 flex-col justify-between p-12 lg:p-16 bg-muted/10 relative overflow-hidden select-none">
+        {/* Decorative Vector Layer Paths */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+          <div className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full bg-gradient-to-br from-primary/10 to-transparent blur-3xl" />
+          <svg className="absolute inset-0 w-full h-full opacity-[0.12] dark:opacity-[0.05]" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="grid" width="44" height="44" patternUnits="userSpaceOnUse">
+                <path d="M 44 0 L 0 0 0 44" fill="none" stroke="currentColor" strokeWidth="1" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+          </svg>
+        </div>
+
+        {/* Global Structural Identity Branding Logo */}
+        <div className="relative z-10 flex items-center gap-2.5">
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground">
+            <FileSpreadsheet className="h-4 w-4" />
+          </div>
+          <span className="font-extrabold text-lg tracking-tight">Sheetforge</span>
+        </div>
+
+        {/* Corporate Focus Headline Slogan Block */}
+        <div className="relative z-10 max-w-xl my-auto space-y-4 pr-4">
+          <h2 className="text-3xl lg:text-4xl xl:text-5xl font-black tracking-tight leading-[1.15]">
+            Transform complex spreadsheets into structured asset frameworks.
+          </h2>
+          <p className="text-muted-foreground text-xs lg:text-sm leading-relaxed max-w-sm">
+            Automate processing configs, map properties fluidly, and maintain reliable document history records.
+          </p>
+        </div>
+
+        {/* Grid Infrastructure Capability Feature Cards */}
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-4 border-t border-border/40 pt-8 w-full">
+          {FEATURES.map(({ icon: Icon, label, iconClass }) => (
+            <div key={label} className="flex items-start gap-3 p-3.5 rounded-xl border border-border/40 bg-background/60 backdrop-blur-sm hover:bg-background/90 transition-all">
+              <div className="p-1.5 rounded-md bg-muted border border-border/40 shrink-0">
+                <Icon className={`h-4 w-4 ${iconClass}`} />
+              </div>
+              <span className="text-[11px] font-bold text-muted-foreground leading-snug mt-0.5">{label}</span>
             </div>
           ))}
         </div>
+      </section>
 
-        {/* Divider */}
-        <div className="relative h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-
-        {/* Auth card */}
-        <Card
-          className="border-border/50 shadow-xl shadow-black/5 backdrop-blur-sm anim-fade-slide bg-card/40"
-          style={{ animationDelay: '0.16s' }}
-        >
-          <CardHeader className="pb-4 space-y-4">
-            {/* Segmented tab switcher */}
-            <div className="flex gap-1 p-1.5 rounded-lg bg-muted/40 w-full">
-              {(['signin', 'signup'] as const).map(tab => (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => switchMode(tab)}
-                  className={`
-                    flex-1 px-4 py-2 rounded-md text-xs font-semibold transition-all duration-200
-                    ${
-                      mode === tab
-                        ? 'bg-background text-foreground shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }
-                  `}
-                >
-                  {tab === 'signin' ? 'Sign In' : 'Sign Up'}
-                </button>
-              ))}
-            </div>
-
-            <div>
-              <CardTitle className="text-lg">
-                {mode === 'signin' ? 'Welcome back 👋' : 'Join us ✨'}
-              </CardTitle>
-              <CardDescription className="text-xs mt-1">
-                {mode === 'signin'
-                  ? 'Enter your credentials to access your account.'
-                  : 'Create your account to get started.'}
-              </CardDescription>
-            </div>
-          </CardHeader>
-
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-              {/* Name — signup only */}
-              {mode === 'signup' && (
-                <div className="space-y-2 anim-fade-slide" style={{ animationDelay: '0s' }}>
-                  <Label htmlFor="name" className="text-xs font-semibold flex items-center gap-1">
-                    <span className="text-sm">👤</span>
-                    Full Name
-                  </Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    type="text"
-                    placeholder="Your full name"
-                    autoComplete="name"
-                    value={form.name}
-                    onChange={handleChange}
-                    disabled={isLoading}
-                    className="h-10 text-sm border-border/50 bg-background/50 focus-visible:ring-primary/40 focus-visible:border-primary/60 transition-all focus-visible:bg-background"
-                  />
-                </div>
-              )}
-
-              {/* Email */}
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-xs font-semibold flex items-center gap-1">
-                  <span className="text-sm">📧</span>
-                  Email Address
-                </Label>
-                <div className="relative group">
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary/0 to-accent/0 group-focus-within:from-primary/5 group-focus-within:to-accent/5 rounded-lg blur transition-all" />
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none group-focus-within:text-primary transition-colors" />
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    placeholder="you@example.com"
-                    autoComplete="email"
-                    value={form.email}
-                    onChange={handleChange}
-                    disabled={isLoading}
-                    className="relative pl-10 h-10 text-sm border-border/50 bg-background/50 focus-visible:ring-primary/40 focus-visible:border-primary/60 transition-all focus-visible:bg-background"
-                  />
-                </div>
-              </div>
-
-              {/* Password */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-xs font-semibold flex items-center gap-1">
-                    <span className="text-sm">🔐</span>
-                    Password
-                  </Label>
-                  {mode === 'signin' && (
-                    <button
-                      type="button"
-                      tabIndex={-1}
-                      className="text-xs text-muted-foreground hover:text-primary hover:underline transition-colors"
-                    >
-                      Forgot?
-                    </button>
-                  )}
-                </div>
-                <div className="relative group">
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary/0 to-accent/0 group-focus-within:from-primary/5 group-focus-within:to-accent/5 rounded-lg blur transition-all" />
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none group-focus-within:text-primary transition-colors" />
-                  <Input
-                    id="password"
-                    name="password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-                    value={form.password}
-                    onChange={handleChange}
-                    disabled={isLoading}
-                    className="relative pl-10 pr-10 h-10 text-sm border-border/50 bg-background/50 focus-visible:ring-primary/40 focus-visible:border-primary/60 transition-all focus-visible:bg-background"
-                  />
-                  <button
-                    type="button"
-                    tabIndex={-1}
-                    onClick={() => setShowPassword(v => !v)}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Error */}
-              {error && (
-                <div role="alert" className="anim-fade text-xs text-destructive bg-destructive/8 border border-destructive/20 rounded-lg px-3 py-2.5 flex items-start gap-2">
-                  <span className="text-base mt-0.5">⚠️</span>
-                  <span>{error}</span>
-                </div>
-              )}
-
-              {/* Submit */}
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className={`
-                  w-full h-10 gap-2 text-sm font-semibold rounded-lg transition-all duration-200 mt-2
-                  bg-gradient-to-r from-primary via-primary to-primary/80 hover:shadow-lg hover:shadow-primary/25 text-white disabled:opacity-50
-                `}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>{mode === 'signin' ? 'Signing in…' : 'Creating account…'}</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4" />
-                    <span>{mode === 'signin' ? 'Sign In' : 'Create Account'}</span>
-                  </>
-                )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        {/* Footer */}
-        <p className="text-center text-xs text-muted-foreground anim-fade" style={{ animationDelay: '0.24s' }}>
-          {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
-          <button
-            type="button"
-            onClick={() => switchMode(mode === 'signin' ? 'signup' : 'signin')}
-            className="text-primary hover:text-primary/80 font-semibold transition-colors hover:underline underline-offset-2"
-          >
-            {mode === 'signin' ? 'Sign up' : 'Sign in'}
-          </button>
-        </p>
-      </div>
     </main>
   )
 }

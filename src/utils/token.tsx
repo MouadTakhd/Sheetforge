@@ -11,7 +11,7 @@ function generateToken(): string {
 }
 
 function storeToken(token: string): void {
-  localStorage.setItem('auth_token', token)
+  localStorage.setItem('sheetforge_jwt_token', token)
   localStorage.setItem('token_created_at', new Date().toISOString())
 }
 

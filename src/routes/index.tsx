@@ -11,7 +11,7 @@ export const Route = createFileRoute('/')({
 
   // 1. Intercept the navigation BEFORE the component loads
   beforeLoad: () => {
-    const token = localStorage.getItem('auth_token')
+    const token = localStorage.getItem('sheetforge_jwt_token')
 
     if (!token) {
       // 2. Safely redirect to your auth route
