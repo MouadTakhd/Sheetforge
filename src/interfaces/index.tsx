@@ -20,6 +20,7 @@ interface UserProfileData {
 interface ProfileFormValues {
   firstName: string
   lastName: string
+  email: string
 }
 
 interface FormErrors {

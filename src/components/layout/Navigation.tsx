@@ -1,207 +1,117 @@
-import { useState, useRef, useEffect } from 'react'
-import { Link, Navigate } from '@tanstack/react-router'
-import { cn } from '@/lib/utils'
-import { useTheme } from '@/components/ui/theme-provider'
+// src/components/Navigation.tsx
 import { useAuth } from '@/stores/auth'
-import {
-  Home, FileSpreadsheet, Sparkles, BookOpen,
-  User, Sun, Moon, LogOut, Settings, Loader2, HelpCircle,
+import { Link } from '@tanstack/react-router'
+import { 
+  Home, 
+  Layers, 
+  BookOpen, 
+  Sparkles, 
+  User, 
+  FileSpreadsheet 
 } from 'lucide-react'
 
-import img_dark  from '@/public/logo-icon-dark-transparent.png'
-import img_light from '@/public/logo-icon-light-transparent.png'
-
-const navItems = [
-  { to: '/home',     label: 'Dashboard',    icon: <Home            className="h-5 w-5" /> },
-  { to: '/convert',  label: 'Convert',       icon: <FileSpreadsheet className="h-5 w-5" /> },
-  { to: '/features', label: 'Features',      icon: <Sparkles        className="h-5 w-5" /> },
-  { to: '/docs',     label: 'Documentation', icon: <BookOpen        className="h-5 w-5" /> },
-  { to: '/about',  label: 'Profile',       icon: <User            className="h-5 w-5" /> },
-]
-
-// ─── logout hook ─────────────────────────────────────────────────────────────
-function useLogout() {
-  const storeLogout   = useAuth((s:any) => s.logout)
-
-  return async () => {
-    await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {})
-    storeLogout()                              // clears localStorage + Zustand state
-    Navigate({ to: '/auth' })
-  }
-}
-
-// ─── account popover ─────────────────────────────────────────────────────────
-function AccountPopover({ onClose }: { onClose: () => void }) {
-  const logout      = useLogout()
-  const [busy, setBusy] = useState(false)
-
-  const handleLogout = async () => {
-    setBusy(true)
-    await logout()
-    setBusy(false)
-  }
-
-  return (
-    <div className="absolute bottom-14 left-0 z-50 w-56 overflow-hidden rounded-xl border border-border bg-popover shadow-xl">
-
-      {/* sign out */}
-      <Link
-        to="/about"
-        onClick={onClose}
-        className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
-      >
-        <Settings className="h-4 w-4 text-muted-foreground" />
-        Account settings
-      </Link>
-
-      <Link
-        to="/docs"
-        onClick={onClose}
-        className="flex items-center gap-3 border-b border-border px-4 py-2.5 text-sm transition-colors hover:bg-muted"
-      >
-        <HelpCircle className="h-4 w-4 text-muted-foreground" />
-        Help & support
-      </Link>
-
-      <button
-        onClick={handleLogout}
-        disabled={busy}
-        className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-destructive transition-colors hover:bg-destructive/10 disabled:opacity-50"
-      >
-        {busy
-          ? <Loader2 className="h-4 w-4 animate-spin" />
-          : <LogOut  className="h-4 w-4" />
-        }
-        {busy ? 'Signing out…' : 'Sign out'}
-      </button>
-    </div>
-  )
-}
-
-// ─── mobile logout ────────────────────────────────────────────────────────────
-function MobileLogout() {
-  const logout      = useLogout()
-  const [busy, setBusy] = useState(false)
-
-  const handle = async () => {
-    setBusy(true)
-    await logout()
-    setBusy(false)
-  }
-
-  return (
-    <button
-      onClick={handle}
-      disabled={busy}
-      className="flex h-12 w-12 items-center justify-center rounded-2xl text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
-    >
-      {busy
-        ? <Loader2 className="h-5 w-5 animate-spin" />
-        : <LogOut  className="h-5 w-5 ml-0.5" />
-      }
-    </button>
-  )
-}
-
-// ─── main component ───────────────────────────────────────────────────────────
 export function Navigation() {
-  const { theme, setTheme } = useTheme()
-  const logoSrc             = theme === 'dark' ? img_light : img_dark
-  const [accountOpen, setAccountOpen] = useState(false)
-  const popoverRef = useRef<HTMLDivElement>(null)
+  // Subscribe reactively to store changes so the UI morphs instantly without refreshes
+  const isAuthenticated = useAuth((state) => state.isAuthenticated)
+  const authenticatedUser = useAuth((state) => state.user)
 
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (!popoverRef.current?.contains(e.target as Node)) setAccountOpen(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
+  // 1. Guard Rail: Hide the entire interface tracking track if on the auth screen
+  if (!isAuthenticated) {
+    return null
+  }
+
+  // Extract values safely from state data mapping layers
+  const initials = authenticatedUser 
+    ? `${authenticatedUser.firstName?.[0] ?? ''}${authenticatedUser.lastName?.[0] ?? ''}`.toUpperCase()
+    : 'U'
 
   return (
-    <>
-      {/* ── DESKTOP FLOATING ISLAND ──────────────────────────────────────── */}
-      <aside className="fixed bottom-4 left-4 top-4 z-50 hidden w-[80px] flex-col items-center rounded-[2rem] border border-border/40 bg-background/60 shadow-2xl backdrop-blur-xl lg:flex">
+    <nav className="fixed bottom-0 left-0 z-50 flex h-16 w-full items-center justify-around border-t border-border/40 bg-background/80 p-2 backdrop-blur-md lg:fixed lg:left-0 lg:top-0 lg:h-screen lg:w-20 lg:flex-col lg:justify-between lg:border-r lg:border-t-0 lg:py-6 lg:px-0">
+      
+      {/* ─── TOP SECTION: IDENTITY LOGO (HIDDEN ON MOBILE) ─── */}
+      <div className="hidden lg:flex items-center justify-center h-10 w-10 rounded-xl bg-primary text-primary-foreground shrink-0 shadow-sm transition-transform hover:scale-105">
+        <FileSpreadsheet className="h-5 w-5" />
+      </div>
+      
+      {/* ─── MID SECTION: STRUCTURAL ROUTING HUD PIPELINE ─── */}
+      <div className="flex flex-row lg:flex-col items-center justify-around w-full lg:justify-center lg:gap-5 flex-1 lg:flex-initial">
+        
+        <Link 
+          to="/home" 
+          className="p-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all [&.active]:text-primary [&.active]:bg-primary/10"
+          title="Dashboard Hub"
+        >
+          <Home className="h-5 w-5" />
+        </Link>
+        
+        <Link 
+          to="/convert" 
+          className="p-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all [&.active]:text-primary [&.active]:bg-primary/10"
+          title="Workspace Engine"
+        >
+          <Layers className="h-5 w-5" />
+        </Link>
+        
+        <Link 
+          to="/features" 
+          className="p-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all [&.active]:text-primary [&.active]:bg-primary/10"
+          title="Platform Ecosystem"
+        >
+          <Sparkles className="h-5 w-5" />
+        </Link>
+        
+        <Link 
+          to="/docs" 
+          className="p-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all [&.active]:text-primary [&.active]:bg-primary/10"
+          title="Core Blueprints"
+        >
+          <BookOpen className="h-5 w-5" />
+        </Link>
 
-        {/* logo */}
-        <div className="flex h-20 w-full items-center justify-center pt-4">
-          <Link
-            to="/"
-            className="group flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 transition-transform duration-300 hover:scale-110"
-          >
-            <img src={logoSrc} alt="ExcelFlow" className="h-7 w-7" />
-          </Link>
-        </div>
-
-        {/* nav links */}
-        <nav className="flex flex-1 flex-col items-center justify-center gap-4 w-full">
-          {navItems.map(({ to, label, icon }) => (
-            <Link
-              key={to}
-              to={to}
-              title={label}
-              className={cn(
-                'group relative flex h-12 w-12 items-center justify-center rounded-2xl',
-                'text-muted-foreground transition-all duration-300',
-                'hover:bg-muted hover:text-foreground',
-                '[&.active]:bg-gradient-to-tr [&.active]:from-blue-500 [&.active]:to-purple-500',
-                '[&.active]:text-white [&.active]:shadow-lg [&.active]:shadow-purple-500/25',
-              )}
-            >
-              {icon}
-              <span className="pointer-events-none absolute left-14 whitespace-nowrap rounded-lg border border-border bg-popover px-3 py-1.5 text-sm font-medium text-popover-foreground opacity-0 shadow-xl transition-all duration-300 group-hover:translate-x-2 group-hover:opacity-100">
-                {label}
-              </span>
-            </Link>
-          ))}
-        </nav>
-
-        {/* bottom actions */}
-        <div className="flex w-full flex-col items-center gap-4 pb-6">
-          <button
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            title="Toggle theme"
-            className="flex h-12 w-12 items-center justify-center rounded-full border border-border/50 bg-background/50 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-          </button>
-
-          <div className="relative" ref={popoverRef}>
-            <button
-              onClick={() => setAccountOpen(v => !v)}
-              title="Account"
-              className={cn(
-                'flex h-12 w-12 items-center justify-center rounded-full transition-colors',
-                'border border-border/50 bg-background/50 text-muted-foreground',
-                'hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive',
-                accountOpen && 'border-destructive/40 bg-destructive/10 text-destructive',
-              )}
-            >
-              <LogOut className="h-5 w-5 ml-0.5" />
-            </button>
-
-            {accountOpen && <AccountPopover onClose={() => setAccountOpen(false)} />}
-          </div>
-        </div>
-      </aside>
-
-      {/* ── MOBILE FLOATING DOCK ─────────────────────────────────────────── */}
-      <nav className="fixed bottom-6 left-6 right-6 z-50 flex h-16 items-center justify-around rounded-3xl border border-border/40 bg-background/70 px-2 shadow-2xl backdrop-blur-xl lg:hidden">
-        {navItems.slice(0, 4).map(({ to, icon }) => (
-          <Link
-            key={to}
-            to={to}
-            className={cn(
-              'flex h-12 w-12 items-center justify-center rounded-2xl',
-              'text-muted-foreground transition-all duration-300',
-              '[&.active]:bg-primary [&.active]:text-primary-foreground [&.active]:shadow-md',
+        {/* Mobile-Only Avatar Button Redirect Row */}
+        <Link 
+          to="/about" 
+          className="block lg:hidden p-1 rounded-xl transition-all"
+          title="Profile Workspace"
+        >
+          <div className="h-7 w-7 rounded-lg border border-border/60 bg-muted flex items-center justify-center overflow-hidden shrink-0">
+            {authenticatedUser?.profilePicture ? (
+              <img src={authenticatedUser.profilePicture} alt="User Avatar" className="h-full w-full object-cover" />
+            ) : (
+              <span className="text-[10px] font-black tracking-tight text-muted-foreground">{initials}</span>
             )}
-          >
-            {icon}
-          </Link>
-        ))}
-        <MobileLogout />
-      </nav>
-    </>
+          </div>
+        </Link>
+      </div>
+
+      {/* ─── BOTTOM SECTION: ACTIVE S3 BUCKET LIVE AVATAR (DESKTOP ONLY) ─── */}
+      <div className="hidden lg:block pb-2">
+        <Link 
+          to="/about"
+          className="block group relative focus:outline-none"
+          title="Manage Account Architecture"
+        >
+          {/* Decorative halo ring on link profile focus active paths */}
+          <div className="h-9 w-9 rounded-xl border border-border/80 bg-background/50 flex items-center justify-center overflow-hidden transition-all group-hover:border-primary/50 group-hover:shadow-md shrink-0">
+            {authenticatedUser?.profilePicture ? (
+              <img 
+                src={authenticatedUser.profilePicture} 
+                alt={`${authenticatedUser.firstName}'s Avatar`} 
+                className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                loading="lazy"
+              />
+            ) : (
+              <div className="h-full w-full bg-linear-to-br from-primary/5 to-primary/20 flex items-center justify-center">
+                <span className="text-xs font-black tracking-tight text-primary">{initials}</span>
+              </div>
+            )}
+          </div>
+          
+          {/* Subtle Online Floating State Ping Node */}
+          <span className="absolute -bottom-0.5 -right-0.5 block h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-background animate-pulse" />
+        </Link>
+      </div>
+
+    </nav>
   )
 }
