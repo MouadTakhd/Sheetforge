@@ -169,10 +169,10 @@ function AccountManagementPage() {
 
     setIsAvatarLoading(true)
     setMessage({ type: 'pending', text: 'Streaming binary asset package down to cloud storage S3 cluster...' })
-
     try {
       const mediaPayload = new FormData()
       mediaPayload.append('file', file)
+      mediaPayload.append('role', 'avatar');
       const mediaResponse = await api.post('/media_objects', mediaPayload, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
@@ -185,6 +185,7 @@ function AccountManagementPage() {
       )
       setUser(response.data)
       setUserStore(response.data)
+      console.log(user)
       setMessage({ type: 'success', text: 'Cloud object pointer saved. Profile avatar updated successfully!' })
     } catch (error) {
       console.error('Failed to upload profile picture', error)

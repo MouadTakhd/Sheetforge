@@ -1,3 +1,4 @@
+// src/routes/index.tsx
 import { createFileRoute, redirect } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/')({
@@ -9,23 +10,19 @@ export const Route = createFileRoute('/')({
     ],
   }),
 
-  // 1. Intercept the navigation BEFORE the component loads
   beforeLoad: () => {
     const token = localStorage.getItem('sheetforge_jwt_token')
 
     if (!token) {
-      // 2. Safely redirect to your auth route
       throw redirect({
         to: '/auth',
       })
     }
 
-    // 3. If they have a token, push them into the main app
     throw redirect({
       to: '/home',
     })
   },
 
-  // 4. Since the loader guarantees a redirect, this component never actually mounts!
   component: () => null,
 })

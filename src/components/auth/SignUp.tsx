@@ -53,9 +53,7 @@ export function SignUpForm({ onSignUpSuccess }: SignUpProps) {
         plainPassword: form.password,
         firstName: form.firstName,
         lastName: form.lastName,
-      }).then(() => {
-        console.log('User registration successful, OTP code sent to email.');
-      });
+      })
 
       // Shift operation focus straight to the OTP code verification interface row
       onSignUpSuccess(form.email)

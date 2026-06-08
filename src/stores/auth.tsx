@@ -1,4 +1,5 @@
 import api from '@/lib/api'
+import { Navigate } from '@tanstack/react-router'
 import { create } from 'zustand'
 
 interface UserProfile {
@@ -18,18 +19,17 @@ interface AuthState {
   user: UserProfile | null
   login: (token: string, user?: UserProfile) => void
   setUser: (user: UserProfile) => void
+  fetchMe: () => Promise<UserProfile | null>
   logout: () => Promise<void>
 }
 
 const STORAGE_KEY = 'sheetforge_jwt_token'
 
-export const useAuth = create<AuthState>((set) => ({
-  // Initialize cleanly from storage context on load
+export const useAuth = create<AuthState>((set, get) => ({
   token: typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null,
   isAuthenticated: typeof window !== 'undefined' ? !!localStorage.getItem(STORAGE_KEY) : false,
-  user: null,
-  
-  // Triggers smoothly on successful authentication validation
+  user: null, // Starts null on fresh reloads, which is normal
+
   login: (token: string, user: UserProfile | null = null) => {
     localStorage.setItem(STORAGE_KEY, token)
     set({ 
@@ -39,30 +39,37 @@ export const useAuth = create<AuthState>((set) => ({
     })
   },
 
-  // Dynamic setter to update user state changes independently (e.g., after profile patch updates)
   setUser: (user: UserProfile) => {
     set({ user })
   },
+
+  // ─── THE SYSTEM REHYDRATION PIECE ───
+  // A clean runtime method to re-populate user state dynamically on reload
+  fetchMe: async () => {
+    const token = localStorage.getItem(STORAGE_KEY)
+    if (!token) return null
+
+    try {
+      const response = await api.get<UserProfile>('/me')
+      set({ user: response.data, isAuthenticated: true })
+      return response.data
+    } catch (err) {
+      console.error('Session verification signature faded or timed out on re-hydration loop.', err)
+      localStorage.removeItem(STORAGE_KEY)
+      set({ token: null, isAuthenticated: false, user: null })
+      return null
+    }
+  },
   
-  // Clean, unified, async session termination pipeline
   logout: async () => {
     try {
-      // 1. Fire a background request to let Symfony revoke the active Refresh Token row
       await api.post('/logout')
     } catch (err) {
       console.warn('Database active session revocation bypassed or backend offline.', err)
     } finally {
-      // 2. ALWAYS clear local trace indicators regardless of connection success
       localStorage.removeItem(STORAGE_KEY)
-      
-      set({ 
-        token: null, 
-        isAuthenticated: false, 
-        user: null 
-      })
-
-      // 3. Clean routing handoff back to your widescreen layout auth interface
-      window.location.href = '/auth'
+      set({ token: null, isAuthenticated: false, user: null })
+      window.location.href = '/auth' // Hard redirect works best for clearing route state layout memory
     }
   }
 }))

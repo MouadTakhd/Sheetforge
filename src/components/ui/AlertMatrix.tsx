@@ -28,7 +28,7 @@ export function AlertMatrix({ message, onClose }: AlertMatrixProps) {
       ping: 'bg-emerald-400'
     },
     error: {
-          styles: 'border-red-500/20 bg-red-500/10 text-red-500', // 👈 SOLID RICH RED DEFINED
+          styles: 'border-red-500/20 bg-red-500/10 text-red-500', //   SOLID RICH RED DEFINED
           icon: <AlertTriangle className="h-4 w-4 text-red-500 shrink-0" />,
           ping: 'bg-red-500'
         },

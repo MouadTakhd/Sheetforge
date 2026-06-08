@@ -18,13 +18,12 @@ const FEATURES = [
 ] as const
 
 export function AuthPage() {
-  const [mode, setMode] = useState<'signin' | 'signup' | 'verify'>('signin')
+  const [mode, setMode] = useState<'signin' | 'signup' >('signin')
   const [pendingEmail, setPendingEmail] = useState('')
   const { theme, setTheme } = useTheme()
 
   function handleSignUpSuccess(email: string) {
     setPendingEmail(email)
-    setMode('verify')
   }
 
   return (
@@ -35,21 +34,12 @@ export function AuthPage() {
         
         {/* Top Navigation Row */}
         <div className="flex items-center justify-between w-full mb-8 md:mb-0">
-          {mode === 'verify' ? (
-            <button
-              onClick={() => setMode('signup')}
-              className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" /> Back to Sign Up
-            </button>
-          ) : (
             <div className="flex items-center gap-2 md:opacity-0 pointer-events-none transition-opacity">
               <div className="flex items-center justify-center p-1.5 rounded-lg bg-primary text-primary-foreground">
                 <FileSpreadsheet className="h-4 w-4" />
               </div>
               <span className="font-extrabold text-base tracking-tight">Sheetforge</span>
             </div>
-          )}
           
           <button
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
@@ -66,17 +56,14 @@ export function AuthPage() {
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight leading-none">
               {mode === 'signin' && 'Welcome back 👋'}
               {mode === 'signup' && 'Create an account ✨'}
-              {mode === 'verify' && 'Verify your email 🛡️'}
             </h1>
             <p className="text-xs text-muted-foreground leading-relaxed">
               {mode === 'signin' && 'Enter your credentials to manage workspace files.'}
               {mode === 'signup' && 'Get started with automated document mapping layers.'}
-              {mode === 'verify' && `We sent a security matrix code sequence to ${pendingEmail}.`}
             </p>
           </div>
 
           {/* Segmented Controller Mode Switcher */}
-          {mode !== 'verify' && (
             <div className="flex p-1 rounded-xl bg-muted/60 border border-border/20 w-full shadow-sm">
               <button
                 type="button"
@@ -93,19 +80,16 @@ export function AuthPage() {
                 Sign Up
               </button>
             </div>
-          )}
 
           {/* Dynamic Content Panel Viewport */}
           <div className="w-full overflow-x-hidden">
             {mode === 'signin' && <SignInForm />}
             {mode === 'signup' && <SignUpForm onSignUpSuccess={handleSignUpSuccess} />}
-            {mode === 'verify' && <OtpVerificationForm email={pendingEmail} onVerificationComplete={() => setMode('signin')} />}
           </div>
         </div>
 
         {/* Unified Bottom Footer Frame */}
-        <div className="text-center pt-6 md:pt-4 border-t border-border/30 w-full max-w-[420px] mx-auto mt-8 md:mt-0">
-          {mode !== 'verify' ? (
+        <div className="text-center pt-6 md:pt-4 border-t border-border/30 w-full max-w-105 mx-auto mt-8 md:mt-0">
             <p className="text-xs text-muted-foreground font-medium">
               {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
               <button
@@ -116,14 +100,7 @@ export function AuthPage() {
                 {mode === 'signin' ? 'Sign up here' : 'Log in here'}
               </button>
             </p>
-          ) : (
-            <p className="text-xs text-muted-foreground font-medium">
-              Didn't receive code?{' '}
-              <button type="button" className="text-primary font-bold hover:underline transition-all">
-                Resend security token
-              </button>
-            </p>
-          )}
+          
         </div>
       </section>
 
