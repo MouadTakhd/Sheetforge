@@ -2,10 +2,49 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="public/logo-favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Modern Frontend App</title>
+    
+    <link rel="icon" type="image/png" href="/logo-favicon.png" />
+
+    <title>Sheetforge | Automated Document Mapping & Transformation</title>
+    <meta name="title" content="Sheetforge | Automated Document Mapping & Transformation" />
+    <meta name="description" content="Transform complex spreadsheets into structured asset frameworks. Automate processing configs, map properties fluidly, and maintain document pipelines." />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Sheetforge | Automated Document Mapping" />
+    <meta property="og:description" content="Transform complex spreadsheets into structured asset frameworks natively." />
+    <meta property="og:image" content="https://your-sheetforge-app.vercel.app/og-preview.png" />
+
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:title" content="Sheetforge | Automated Document Mapping" />
+    <meta property="twitter:description" content="Transform complex spreadsheets into structured asset frameworks natively." />
+    <meta property="twitter:image" content="https://your-sheetforge-app.vercel.app/og-preview.png" />
+
+    <script>
+      (function () {
+        const theme = localStorage.getItem('sheetforge-ui-theme') || 'system';
+        const root = window.document.documentElement;
+        if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          root.classList.add('dark');
+        } else {
+          root.classList.add('light');
+        }
+      })();
+    </script>
+
+    <script>
+      (function () {
+        window.addEventListener('keydown', function (event) {
+          // Intercepts Alt + Left Arrow or Alt + Right Arrow commands to stop double layout glitches
+          if (event.altKey && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+        }, true); // Setting useCapture to true catches the click event immediately
+      })();
+    </script>
   </head>
+
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>

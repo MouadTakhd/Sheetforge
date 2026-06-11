@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i)(googlebot|bingbot|yandex|baiduspider|twitterbot|facebookexternalhit|rogetbot|linkedinbot|embedly|quora link preview|showyoubot|outbrain|pinterest\/0\\.|pinterestbot|slackbot|vkShare|W3C_Validator|discordbot)"
+        }
+      ],
+      "destination": "https://service.prerender.io/https://%{host}/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
