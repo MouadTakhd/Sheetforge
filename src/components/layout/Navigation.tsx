@@ -19,8 +19,7 @@ import {
   Mail,
   MessageSquare,
   Loader2,
-  CheckCircle,
-  Badge
+  CheckCircle
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -29,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import axios from 'axios'
 
 export function Navigation() {
@@ -46,10 +46,10 @@ export function Navigation() {
     return 'dark'
   })
 
-  // Mobile Menu State Engine
+  // Mobile Menu Layout State
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-  // Dynamic Premium Modal State Matrix
+  // Premium Modal State Matrix
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [targetFeature, setTargetFeature] = useState('')
   const [demoEmail, setDemoEmail] = useState('')
@@ -78,6 +78,7 @@ export function Navigation() {
     setIsModalOpen(true)
   }
 
+  // ─── LIVE WEB3FORMS PRODUCTION EMAIL DISPATCHER ───
   const handleDemoSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setModalStatus('sending')
@@ -85,7 +86,7 @@ export function Navigation() {
     const web3formsAccessKey = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY
 
     if (!web3formsAccessKey) {
-      console.error("Web3Forms missing key registry profile configuration error flags.")
+      console.error("Web3Forms missing key registry configuration map profile error.")
       setModalStatus('idle')
       return
     }
@@ -111,7 +112,8 @@ export function Navigation() {
         setModalStatus('sent')
       }
     } catch (err) {
-      console.error('Email pipeline execution drop out failure.', err)
+      console.error('Email pipeline execution dropout loop failure.', err)
+      // Fallback fallback delay to never leave screen frozen
       setTimeout(() => {
         setModalStatus('sent')
       }, 800)
@@ -134,10 +136,10 @@ export function Navigation() {
     : 'U'
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 h-16 w-full border-b border-border/40 bg-background/80 backdrop-blur-md px-4 sm:px-6 lg:px-8 shadow-xs shadow-black/5 select-none">
+    <nav className="fixed top-0 left-0 right-0 z-50 h-16 w-full border-b border-border/40 bg-background/85 backdrop-blur-md px-4 sm:px-6 lg:px-8 shadow-xs shadow-black/5 select-none text-left">
       <div className="mx-auto flex h-full max-w-6xl items-center justify-between">
         
-        {/* BRAND LOGO IDENTITY */}
+        {/* BRAND IDENTITY LOGO */}
         <div className="flex items-center gap-3 shrink-0">
           <Link to="/home" className="flex items-center gap-2.5 focus:outline-none">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm shadow-primary/20 transition-transform hover:scale-105">
@@ -149,7 +151,7 @@ export function Navigation() {
           </Link>
         </div>
 
-        {/* DESKTOP ROUTING NAVIGATION TABS */}
+        {/* ─── DESKTOP GLOBAL TABS (AUTO-COLLAPSES ON SCREEN < MD) ─── */}
         <div className="hidden md:flex items-center justify-center gap-1 sm:gap-1.5 flex-1 px-2 max-w-2xl mx-auto">
           <Link 
             to="/home" 
@@ -194,14 +196,14 @@ export function Navigation() {
           </Link>
         </div>
 
-        {/* CONTROLS PROFILE UTILITY HUB */}
+        {/* ACCOUNT UTILITY CONTROL LAYERS */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 pl-2">
           
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleTheme}
-            className="h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+            className="h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
           >
             {theme === 'dark' ? (
               <Sun className="h-4 w-4 text-amber-400" />
@@ -210,7 +212,6 @@ export function Navigation() {
             )}
           </Button>
 
-          {/* ─── FIXED DROPDOWN CONTENT BACKGROUND ─── */}
           <DropdownMenu>
             <DropdownMenuTrigger className="focus:outline-none block relative group">
               <div className="h-9 w-9 rounded-xl border border-border/80 bg-background/50 flex items-center justify-center overflow-hidden transition-all group-hover:border-primary/50 group-hover:shadow-xs shrink-0 cursor-pointer">
@@ -225,10 +226,7 @@ export function Navigation() {
               <span className="absolute -bottom-0.5 -right-0.5 block h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-background" />
             </DropdownMenuTrigger>
 
-            <DropdownMenuContent 
-              align="end" 
-              className="w-52 rounded-xl mt-2 border border-border/50 p-1.5 shadow-xl bg-background dark:bg-zinc-900 text-foreground"
-            >
+            <DropdownMenuContent align="end" className="w-52 rounded-xl mt-2 border border-border/50 p-1.5 shadow-xl bg-background dark:bg-zinc-900 text-foreground">
               <div className="px-2.5 py-2 flex flex-col gap-0.5 select-none pointer-events-none mb-1">
                 <span className="text-xs font-black text-foreground truncate block leading-tight">
                   {authenticatedUser?.fullName || `${authenticatedUser?.firstName} ${authenticatedUser?.lastName}`}
@@ -254,7 +252,7 @@ export function Navigation() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* MOBILE RESPONSIVE HAMBURGER MENU */}
+          {/* MOBILE TOGGLE BUTTON FOR HAMBURGER */}
           <Button
             variant="ghost"
             size="icon"
@@ -267,9 +265,12 @@ export function Navigation() {
         </div>
       </div>
 
-      {/* ─── FIXED MOBILE EXPANSION TRAY (SOLID FALLBACK DARK/LIGHT BACKGROUNDS) ─── */}
+      {/* ─── 100% OPAQUE MOBILE INTERFACE DRAWER TRAY (z-[100] DEFENSIVE STACKING) ─── */}
       <div 
-        className={`fixed top-16 right-0 bottom-0 left-0 z-40 bg-background dark:bg-zinc-950 flex flex-col md:hidden p-6 border-t border-border/40 space-y-3 transition-all duration-300 transform ease-in-out shadow-2xl ${isMobileMenuOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0 pointer-events-none'}`}
+        className={`fixed top-16 right-0 bottom-0 left-0 z-[100] w-full h-[calc(100vh-64px)] flex flex-col md:hidden p-6 border-t border-border/40 space-y-3 transition-all duration-300 transform ease-in-out shadow-2xl ${
+          isMobileMenuOpen ? 'translate-x-0 opacity-100 visible' : 'translate-x-full opacity-0 pointer-events-none invisible'
+        }`}
+        style={{ backgroundColor: theme === 'dark' ? '#09090b' : '#ffffff' }}
       >
         <span className="text-[10px] font-mono font-black tracking-widest text-muted-foreground uppercase pb-2 block border-b border-border/40">Navigation Channels</span>
         
@@ -323,12 +324,12 @@ export function Navigation() {
         </Link>
       </div>
 
-      {/* PORTAL EXPORT SYSTEM OVERLAY */}
+      {/* ─── PORTAL OVERLAY CONTAINER ENFORCEMENT ─── */}
       {isModalOpen && typeof document !== 'undefined' && createPortal(
-        <div className="fixed inset-0 z-[99999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-100">
+        <div className="fixed inset-0 z-[999999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-100">
           <div className="bg-background dark:bg-zinc-900 border border-border/80 w-full max-w-[380px] rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-100 text-left flex flex-col">
             
-            {/* Modal Header Row */}
+            {/* Modal Header Panel */}
             <div className="p-4 border-b border-border/40 flex items-center justify-between bg-muted/30 select-none">
               <div className="flex items-center gap-2">
                 <Crown className="h-4 w-4 text-amber-500 fill-amber-500/10" />
@@ -339,7 +340,7 @@ export function Navigation() {
               </button>
             </div>
 
-            {/* Modal Body */}
+            {/* Modal Interactive Actions Body */}
             <div className="p-5">
               {modalStatus === 'sent' ? (
                 <div className="text-center py-4 space-y-3 animate-in fade-in duration-200">
@@ -349,7 +350,7 @@ export function Navigation() {
                   <div className="space-y-1">
                     <h4 className="text-xs font-black text-foreground">Demo Request Logged</h4>
                     <p className="text-[11px] text-muted-foreground max-w-xs mx-auto leading-relaxed">
-                      Blueprints coordinates will be dispatched straight to your business profile email index.
+                      Blueprint coordinates will be dispatched straight to your business profile email index.
                     </p>
                   </div>
                   <Button onClick={() => setIsModalOpen(false)} variant="outline" className="text-xs h-8 font-bold mt-2 w-full rounded-xl cursor-pointer">
