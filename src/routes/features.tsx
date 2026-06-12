@@ -1,11 +1,9 @@
 // src/routes/features.tsx
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardTitle } from '@/components/ui/card'
 import { 
   Sparkles, 
-  ShieldCheck, 
-  Zap, 
   Eye, 
   Database, 
   RefreshCw, 
@@ -15,10 +13,14 @@ import {
 } from 'lucide-react'
 
 export const Route = createFileRoute('/features')({
+  // ─── UPDATED ADAPTIVE ROUTE GUARD ───
   beforeLoad: () => {
+    // 🛡️ Strip hidden quote traps from Vercel / local environment string injections
+    const isStaticMode = import.meta.env.VITE_API_BASE_URL?.replace(/['"]/g, '') === 'NO'
     const token = localStorage.getItem('sheetforge_jwt_token')
 
-    if (!token) {
+    // Only force a redirect wall if we are actively bound to a live API environment
+    if (!isStaticMode && !token) {
       throw redirect({ to: '/auth' })
     }
   },
@@ -65,14 +67,19 @@ const ADVANCED_FEATURES = [
 ] as const
 
 function FeaturesPage() {
+  // Synchronous Title Injection Context
+  if (typeof document !== 'undefined') {
+    document.title = 'Core platform Capabilities | Sheetforge'
+  }
+
   return (
-    <main className="space-y-6 sm:space-y-8 text-foreground pb-12 w-full max-w-none animate-in fade-in-50 duration-300">
+    <main className="space-y-6 sm:space-y-8 text-foreground pb-12 w-full max-w-none animate-in fade-in-50 duration-300 text-left">
       
       {/* ─── METADATA BANNER ─── */}
       <section className="rounded-2xl sm:rounded-3xl border border-border/40 bg-card/40 p-6 sm:p-8 relative overflow-hidden">
         {/* Background Ambient Glowing Orbs */}
-        <div className="absolute right-0 top-0 h-40 w-40 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute left-1/3 bottom-0 h-28 w-28 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute right-0 top-0 h-40 w-40 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" aria-hidden />
+        <div className="absolute left-1/3 bottom-0 h-28 w-28 bg-primary/5 rounded-full blur-3xl pointer-events-none" aria-hidden />
         
         <div className="space-y-3 sm:space-y-4 relative z-10">
           <Badge className="bg-purple-500/10 text-purple-500 border-purple-500/20 rounded-full px-3 py-0.5 text-[10px] font-bold tracking-wide uppercase">
@@ -103,7 +110,7 @@ function FeaturesPage() {
                 </div>
                 <Badge 
                   variant="secondary" 
-                  className="text-[9px] font-black rounded-full px-2 py-0 border border-white/5 bg-background text-muted-foreground/90 tracking-wide"
+                  className="text-[9px] font-black rounded-full px-2 py-0 border border-white/5 bg-background text-muted-foreground/90 tracking-wide select-none"
                 >
                   {feature.badge}
                 </Badge>
