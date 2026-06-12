@@ -1,3 +1,4 @@
+// src/routes/__root.tsx
 import { createRootRoute, Outlet, useRouter } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { useEffect, useState } from 'react'
@@ -10,7 +11,7 @@ export const Route = createRootRoute({
 })
 
 function RootComponent() {
-  const router = useRouter() // Gain direct access to the router runtime state
+  const router = useRouter()
   const authenticatedUser = useAuth((state) => state.user)
   const isAuthenticated = useAuth((state) => state.isAuthenticated)
   const fetchMe = useAuth((state) => state.fetchMe)
@@ -18,33 +19,38 @@ function RootComponent() {
   const token = localStorage.getItem('sheetforge_jwt_token')
   const [isHydrating, setIsHydrating] = useState(true)
 
-  const isStaticMode = import.meta.env.VITE_API_BASE_URL === 'NO'
+  // 🛡️ Safe Environmental String Sanitization (Strips unexpected outer quote wrappers)
+  const isStaticMode = import.meta.env.VITE_API_BASE_URL?.replace(/['"]/g, '') === 'NO'
 
-  // ─── THE SYSTEM HYDRATION GUARD ───
+  // ─── SYSTEM HYDRATION PIPELINE ───
   useEffect(() => {
     const syncSessionState = async () => {
-      // If running the offline static sandbox, bypass server handshake pipelines instantly
       if (isStaticMode) {
         setIsHydrating(false)
         return
       }
 
       if (token && !authenticatedUser) {
-        await fetchMe()
+        try {
+          await fetchMe()
+        } catch (e) {
+          console.error(e)
+        }
       }
       setIsHydrating(false)
     }
     void syncSessionState()
   }, [token, isStaticMode])
 
-  // ─── THE CRITICAL NAV FLICKER BUG FIX ───
+  // ─── SAFE TRANSITION INVALIDATION ───
+  // This ONLY fires when a user actively changes their login state, preventing rendering freezes
   useEffect(() => {
-    if ((isStaticMode || (isAuthenticated && authenticatedUser))) {
+    if (!isStaticMode && isAuthenticated && authenticatedUser) {
       void router.invalidate()
     }
-  }, [isAuthenticated, authenticatedUser, router, isStaticMode])
+  }, [isAuthenticated, authenticatedUser, isStaticMode])
 
-  // Only display the loading blackout spinner if we are hitting a live server environment
+  // Display loader ONLY in connected cloud execution modes
   if (!isStaticMode && isHydrating && token) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background text-foreground select-none">
@@ -56,8 +62,7 @@ function RootComponent() {
     )
   }
 
-  // ─── DYNAMIC CORE LAYOUT VIEWPORT MATRIX SWITCH ───
-  // In static mode, we bypass authentication checks to lock the core interface shell open from launch
+  // Determine layout mount parameters
   const isUserLoggedIn = isStaticMode || (!!token && isAuthenticated && !!authenticatedUser)
 
   return (
