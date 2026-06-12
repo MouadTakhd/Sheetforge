@@ -1,4 +1,3 @@
-// src/routes/index.tsx
 import { createFileRoute, redirect } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/')({
@@ -11,14 +10,13 @@ export const Route = createFileRoute('/')({
   }),
 
   beforeLoad: () => {
-    const token = localStorage.getItem('sheetforge_jwt_token')
-
-    if (!token) {
-      throw redirect({
-        to: '/auth',
-      })
+    // ─── STATIC SANDBOX AUTOMATIC INITIALIZATION ───
+    // Seeds the mock credential key directly into device memory on first load
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sheetforge_jwt_token', 'static_mock_session_key_prod')
     }
 
+    // Unconditionally skip all login authentication walls and land right in the cockpit
     throw redirect({
       to: '/home',
     })

@@ -1,5 +1,7 @@
-import { createFileRoute, redirect, Link, Navigate } from '@tanstack/react-router'
+// src/routes/home.__app.tsx
+import { createFileRoute, redirect, Link } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom' // 👈 Essential for bulletproof modal isolation
 import { useAuth } from '@/stores/auth'
 import api from '@/lib/api'
 
@@ -13,13 +15,11 @@ import {
   FileSpreadsheet,
   FileText,
   Clock,
-  CheckCircle2,
   AlertCircle,
   Activity,
   ArrowRight,
   RefreshCw,
   X,
-  Sliders,
   SlidersHorizontal,
   ArrowLeft
 } from 'lucide-react'
@@ -28,9 +28,12 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 
 export const Route = createFileRoute('/home/__app')({
+  // ─── STATIC ROUTE PASS-THROUGH GUARD ───
   beforeLoad: () => {
+    const isStaticMode = import.meta.env.VITE_API_BASE_URL === 'NO'
     const token = localStorage.getItem('sheetforge_jwt_token')
-    if (!token) {
+    
+    if (!isStaticMode && !token) {
       throw redirect({ to: '/auth' })
     }
   },
@@ -54,25 +57,78 @@ interface ApiResponse {
   totalItems: number
 }
 
+// ─── STATIC WORKSPACE MOCK DATA ARRAYS ───
+const MOCK_HISTORICAL_JOBS: ConversionJob[] = [
+  {
+    '@id': '/api/conversion_jobs/1',
+    id: 'sf-job-bf482d91-x01',
+    status: 'completed',
+    conversionType: 'xlsx_to_json',
+    sourceFormat: 'xlsx',
+    targetFormat: 'json',
+    progressPct: 100,
+    createdAt: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
+    options: { sheet_name: 'Q2_Financial_Grid', parsed_rows: 842, encoding: 'UTF-8' }
+  },
+  {
+    '@id': '/api/conversion_jobs/2',
+    id: 'sf-job-ac1190ee-p44',
+    status: 'completed',
+    conversionType: 'csv_to_sql',
+    sourceFormat: 'csv',
+    targetFormat: 'sql',
+    progressPct: 100,
+    createdAt: new Date(Date.now() - 1000 * 60 * 140).toISOString(),
+    options: { table_name: 'production_analytics_node', dialect: 'PostgreSQL', delimiter: ',' }
+  },
+  {
+    '@id': '/api/conversion_jobs/3',
+    id: 'sf-job-fa33118b-c09',
+    status: 'failed',
+    conversionType: 'ods_to_xml',
+    sourceFormat: 'ods',
+    targetFormat: 'xml',
+    progressPct: 40,
+    createdAt: new Date(Date.now() - 1000 * 60 * 1440).toISOString(),
+    options: { compilation_error: 'Decompression layer chunk checksum boundary mismatch.' }
+  }
+]
+
 export function DashboardWorkspace() {
   const authenticatedUser = useAuth((state) => state.user)
   const [jobs, setJobs] = useState<ConversionJob[]>([])
   const [totalJobs, setTotalJobs] = useState<number>(0)
-  if (typeof window !== 'undefined' && !localStorage.getItem('sheetforge_jwt_token')) {
-    Navigate({ to: '/home' })
-  }
+  
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false)
 
+  const isStaticMode = import.meta.env.VITE_API_BASE_URL === 'NO'
 
-  // ─── TERMINAL MASTER MODAL CONTROL STATES ───
+  // Sync Atomic Render Shield Guard (Stops structural layout leakage cascades)
+  if (!isStaticMode && typeof window !== 'undefined' && !localStorage.getItem('sheetforge_jwt_token')) {
+    return null
+  }
+
+  // ─── LOG HISTORY OVERLAY STREAM CONTROL STATES ───
   const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false)
   const [activeModalView, setActiveModalView] = useState<'feed' | 'detail'>('feed')
   const [selectedJob, setSelectedJob] = useState<ConversionJob | null>(null)
 
   const fetchJobHistory = async () => {
-    if (!authenticatedUser?.id) return
     setIsRefreshing(true)
+
+    // ─── OPTION A: HYBRID STATIC STREAM SIMULATOR ───
+    if (isStaticMode) {
+      await new Promise((resolve) => setTimeout(resolve, 600)) // Elegant layout sync buffer delay
+      setJobs(MOCK_HISTORICAL_JOBS)
+      setTotalJobs(MOCK_HISTORICAL_JOBS.length)
+      setIsLoading(false)
+      setIsRefreshing(false)
+      return
+    }
+
+    // ─── OPTION B: PRODUCTION SYSTEM GATEWAY LOOKUP ───
+    if (!authenticatedUser?.id) return
     try {
       const response = await api.get<ApiResponse>(
         `/conversion_jobs?order[createdAt]=desc&user=/api/users/${authenticatedUser.id}`
@@ -113,7 +169,7 @@ export function DashboardWorkspace() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-64px)] w-full bg-background text-foreground flex flex-col justify-center overflow-x-hidden p-6 sm:p-12 relative select-none">
+    <div className="min-h-[calc(100vh-64px)] w-full bg-background text-foreground flex flex-col justify-center overflow-x-hidden p-6 sm:p-12 relative select-none text-left">
       
       {/* GLOWING AMBIENT CORE BACKGROUND GRAPHICS */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none opacity-30">
@@ -148,10 +204,10 @@ export function DashboardWorkspace() {
           <div className="pt-2 flex flex-wrap items-center gap-3">
             <Button
               onClick={handleOpenHistoryFeed}
-              className="rounded-xl h-10 px-5 text-xs font-mono font-black uppercase tracking-wider bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 hover:opacity-90 border border-border/60 shadow-md flex items-center gap-2"
+              className="rounded-xl h-10 px-5 text-xs font-mono font-black uppercase tracking-wider bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 hover:opacity-90 border border-border/60 shadow-md flex items-center gap-2 cursor-pointer"
             >
               <Terminal className="h-4 w-4 text-emerald-500" />
-              View Execution Logs
+              <span>View Execution Logs</span>
               <Badge className="h-4 min-w-4 bg-emerald-500 text-white font-mono text-[9px] px-1 font-bold flex items-center justify-center rounded-md border-none ml-1">
                 {totalJobs}
               </Badge>
@@ -203,9 +259,9 @@ export function DashboardWorkspace() {
                 </p>
               </div>
             </div>
-            <Link to="/image" className="inline-flex items-center gap-1.5 text-xs font-mono text-blue-500 hover:text-blue-400 font-bold pt-6 mt-2 w-fit">
+            <span className="inline-flex items-center gap-1.5 text-xs font-mono text-blue-500/60 font-bold pt-6 mt-2 w-fit select-none">
               Execute Ingestion Engine <ArrowRight className="h-3 w-3" />
-            </Link>
+            </span>
           </Card>
 
           {/* CARD 3: STORAGE LIFECYCLE */}
@@ -226,29 +282,28 @@ export function DashboardWorkspace() {
                 </p>
               </div>
             </div>
-            <Link to="/about" className="inline-flex items-center gap-1.5 text-xs font-mono text-purple-500 hover:text-purple-400 font-bold pt-6 mt-2 w-fit">
+            <span className="inline-flex items-center gap-1.5 text-xs font-mono text-purple-500/60 font-bold pt-6 mt-2 w-fit select-none">
               Inspect Cloud Nodes <ArrowRight className="h-3 w-3" />
-            </Link>
+            </span>
           </Card>
 
         </section>
-
       </div>
 
-      {/* ─── 3. THE UNIFIED HIGH-CONTRAST SYSTEM TERMINAL MASTER MODAL ─── */}
-      {isHistoryOpen && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in select-text">
-          <Card className="w-full max-w-2xl rounded-2xl border border-border/60 bg-card shadow-2xl overflow-hidden flex flex-col animate-scale-in max-h-[85vh]">
+      {/* ─── 3. PORTAL COMPILER MASTER TERMINAL OVERLAY MODAL ─── */}
+      {isHistoryOpen && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-[999999] animate-fade-in select-text">
+          <Card className="w-full max-w-2xl rounded-2xl border border-border/80 bg-card shadow-2xl overflow-hidden flex flex-col animate-scale-in max-h-[80vh] text-left">
             
-            {/* TERMINAL SHARED TOP BAR CONTROLLER */}
-            <div className="border-b border-border/60 p-4 flex items-center justify-between bg-muted/30 select-none shrink-0">
+            {/* TERMINAL HEADER TOP PROFILE CONTROLLER */}
+            <div className="border-b border-border/40 p-4 flex items-center justify-between bg-muted/30 select-none shrink-0">
               <div className="flex items-center gap-2">
                 {activeModalView === 'detail' ? (
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={handleBackToFeed}
-                    className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground mr-1"
+                    className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground mr-1 cursor-pointer"
                   >
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
@@ -274,13 +329,13 @@ export function DashboardWorkspace() {
                 variant="ghost" 
                 size="icon" 
                 onClick={handleCloseMasterModal}
-                className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground"
+                className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
 
-            {/* VIEW LAYER A: LOG MATRIX GRID STREAM */}
+            {/* VIEW TARGET A: TERMINAL LIST ENGINE COMPILER FEED */}
             {activeModalView === 'feed' && (
               <div className="flex flex-col flex-1 min-h-0 overflow-hidden bg-background/40">
                 <div className="px-4 py-2 bg-muted/10 border-b border-border/40 flex items-center justify-between text-[10px] font-mono text-muted-foreground select-none">
@@ -289,7 +344,7 @@ export function DashboardWorkspace() {
                     variant="ghost"
                     onClick={() => void fetchJobHistory()}
                     disabled={isRefreshing}
-                    className="h-5 text-[9px] font-mono font-bold px-2 flex items-center gap-1 text-emerald-500"
+                    className="h-5 text-[9px] font-mono font-black px-2 flex items-center gap-1 text-emerald-500 cursor-pointer"
                   >
                     <RefreshCw className={`h-2.5 w-2.5 ${isRefreshing ? 'animate-spin' : ''}`} />
                     RE-SYNC FEED
@@ -297,7 +352,7 @@ export function DashboardWorkspace() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto divide-y divide-border/30 scrollbar-none">
-                  {isLoading ? (
+                  {isRefreshing && jobs.length === 0 ? (
                     <div className="flex flex-col items-center justify-center font-mono text-[10px] text-muted-foreground gap-2 py-24 select-none">
                       <RefreshCw className="h-4 w-4 text-emerald-500 animate-spin" />
                       COMPILING DATA LAYER METADATA BUFFER...
@@ -310,11 +365,7 @@ export function DashboardWorkspace() {
                   ) : (
                     jobs.map((job) => {
                       const dateFormatted = new Date(job.createdAt).toLocaleString(undefined, {
-                        month: 'short',
-                        day: '2-digit',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false
+                        month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false
                       })
 
                       return (
@@ -334,12 +385,8 @@ export function DashboardWorkspace() {
 
                             <div className="space-y-0.5">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-xs font-bold text-foreground font-mono">
-                                  {job.conversionType}
-                                </span>
-                                <span className="text-[10px] font-mono text-muted-foreground bg-muted border border-border/50 px-1.5 py-0.25 rounded select-none">
-                                  {job.id.substring(0, 8)}
-                                </span>
+                                <span className="text-xs font-bold text-foreground font-mono">{job.conversionType}</span>
+                                <span className="text-[10px] font-mono text-muted-foreground bg-muted border border-border/50 px-1.5 py-0.25 rounded select-none">{job.id.substring(0, 8)}</span>
                               </div>
                               <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-mono select-none">
                                 <Clock className="h-3 w-3 text-muted-foreground/50" />
@@ -350,11 +397,8 @@ export function DashboardWorkspace() {
 
                           <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0 select-none">
                             <div className={`text-[9px] font-mono font-black border px-2 py-0.5 rounded-md ${
-                              job.status === 'completed' || job.status === 'done'
-                                ? 'bg-emerald-500/5 border-emerald-500/20 text-emerald-500'
-                                : job.status === 'failed'
-                                  ? 'bg-red-500/5 border-red-500/20 text-red-500'
-                                  : 'bg-amber-500/5 border-amber-500/20 text-amber-500 animate-pulse'
+                              job.status === 'completed' || job.status === 'done' ? 'bg-emerald-500/5 border-emerald-500/20 text-emerald-500' :
+                              job.status === 'failed' ? 'bg-red-500/5 border-red-500/20 text-red-500' : 'bg-amber-500/5 border-amber-500/20 text-amber-500'
                             }`}>
                               {job.status.toUpperCase()}
                             </div>
@@ -376,51 +420,44 @@ export function DashboardWorkspace() {
               </div>
             )}
 
-            {/* VIEW LAYER B: LOG CONFIGURATION DRILL-DOWN DETAILED MATRIX */}
+            {/* VIEW TARGET B: CONFIGURATION DRILL DOWN DETAILS VIEW */}
             {activeModalView === 'detail' && selectedJob && (
-              <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+              <div className="flex flex-col flex-1 min-h-0 overflow-hidden bg-background">
                 <div className="flex-1 overflow-y-auto p-5 space-y-4 font-mono text-xs">
                   <div className="grid grid-cols-3 border-b border-border/40 pb-2 text-muted-foreground text-[10px] uppercase font-bold select-none">
                     <span>Validation Parameter</span>
                     <span className="col-span-2">System Schema Reference</span>
                   </div>
 
-                  <div className="grid grid-cols-3 py-1 border-b border-border/30">
+                  <div className="grid grid-cols-3 py-2 border-b border-border/30">
                     <span className="text-muted-foreground select-none">Job Identity</span>
                     <span className="col-span-2 text-foreground font-bold break-all select-all">{selectedJob.id}</span>
                   </div>
 
-                  <div className="grid grid-cols-3 py-1 border-b border-border/30">
+                  <div className="grid grid-cols-3 py-2 border-b border-border/30">
                     <span className="text-muted-foreground select-none">Conversion Match</span>
                     <span className="col-span-2 text-foreground font-bold">{selectedJob.conversionType}</span>
                   </div>
 
-                  <div className="grid grid-cols-3 py-1 border-b border-border/30">
+                  <div className="grid grid-cols-3 py-2 border-b border-border/30">
                     <span className="text-muted-foreground select-none">Source Format</span>
                     <span className="col-span-2">
-                      <Badge variant="outline" className="font-mono text-[10px] rounded uppercase select-none">
-                        {selectedJob.sourceFormat}
-                      </Badge>
+                      <Badge variant="outline" className="font-mono text-[10px] rounded uppercase select-none">{selectedJob.sourceFormat}</Badge>
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-3 py-1 border-b border-border/30">
+                  <div className="grid grid-cols-3 py-2 border-b border-border/30">
                     <span className="text-muted-foreground select-none">Target Format</span>
                     <span className="col-span-2">
-                      <Badge variant="outline" className="font-mono text-[10px] rounded uppercase border-emerald-500/30 text-emerald-500 bg-emerald-500/5 select-none">
-                        {selectedJob.targetFormat}
-                      </Badge>
+                      <Badge variant="outline" className="font-mono text-[10px] rounded uppercase border-emerald-500/30 text-emerald-500 bg-emerald-500/5 select-none">{selectedJob.targetFormat}</Badge>
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-3 py-1 border-b border-border/30">
+                  <div className="grid grid-cols-3 py-2 border-b border-border/30">
                     <span className="text-muted-foreground select-none">Timestamp Logs</span>
-                    <span className="col-span-2 text-foreground font-bold">
-                      {new Date(selectedJob.createdAt).toLocaleString()}
-                    </span>
+                    <span className="col-span-2 text-foreground font-bold">{new Date(selectedJob.createdAt).toLocaleString()}</span>
                   </div>
 
-                  {/* SUB-SECTION MAP FOR PARSED TRANSLATION ENTRIES */}
                   <div className="space-y-2 pt-2">
                     <div className="flex items-center gap-1.5 text-muted-foreground text-[10px] uppercase font-bold select-none">
                       <SlidersHorizontal className="h-3 w-3 text-emerald-500" />
@@ -444,31 +481,22 @@ export function DashboardWorkspace() {
                   </div>
                 </div>
 
-                {/* INTERACTIVE WORKSPACE FORWARD PUSH BUTTONS */}
+                {/* MODAL BOTTOM ACTION ROW */}
                 <div className="border-t border-border/60 p-4 bg-muted/20 flex items-center justify-between shrink-0 select-none">
                   <Button 
                     variant="outline" 
                     onClick={handleBackToFeed}
-                    className="rounded-xl h-9 text-xs font-bold px-3.5 flex items-center gap-1.5"
+                    className="rounded-xl h-9 text-xs font-bold px-3.5 flex items-center gap-1.5 cursor-pointer"
                   >
                     <ArrowLeft className="h-3.5 w-3.5" />
-                    Back to History
+                    <span>Back to History</span>
                   </Button>
                   
                   <div className="flex items-center gap-2">
-                    <Button 
-                      variant="ghost" 
-                      onClick={handleCloseMasterModal}
-                      className="rounded-xl h-9 text-xs font-bold px-3.5"
-                    >
-                      Dismiss View
-                    </Button>
-                    <Link
-                      to={['xlsx', 'csv', 'ods'].includes(selectedJob.sourceFormat) ? '/convert' : '/image'}
-                      onClick={handleCloseMasterModal}
-                    >
-                      <Button className="rounded-xl h-9 text-xs font-black bg-emerald-500 hover:opacity-90 text-white px-4 tracking-wide flex items-center gap-1.5 shadow-sm shadow-emerald-500/10">
-                        Open Workspace
+                    <Button variant="ghost" onClick={handleCloseMasterModal} className="rounded-xl h-9 text-xs font-bold px-3.5 cursor-pointer">Dismiss View</Button>
+                    <Link to="/convert" onClick={handleCloseMasterModal}>
+                      <Button className="rounded-xl h-9 text-xs font-black bg-emerald-500 hover:opacity-90 text-white px-4 tracking-wide flex items-center gap-1.5 shadow-xs cursor-pointer">
+                        <span>Open Workspace</span>
                         <ArrowUpRight className="h-3.5 w-3.5" />
                       </Button>
                     </Link>
@@ -478,8 +506,10 @@ export function DashboardWorkspace() {
             )}
 
           </Card>
-        </div>
+        </div>,
+        document.body
       )}
+
     </div>
   )
 }

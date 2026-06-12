@@ -49,9 +49,13 @@ import {
 } from '@tanstack/react-table'
 
 export const Route = createFileRoute('/convert')({
+  // ─── STATIC ROUTE INTRUSION GUARD ───
   beforeLoad: () => {
-    const token = localStorage.getItem('sheetforge_jwt_token')
-    if (!token) {
+    const isStaticMode = import.meta.env.VITE_API_BASE_URL === 'NO'
+    const activeSessionToken = localStorage.getItem('sheetforge_jwt_token')
+    
+    // Allow pass-through if running in offline static mode or if a token exists
+    if (!isStaticMode && !activeSessionToken) {
       throw redirect({ to: '/auth' })
     }
   },
@@ -98,7 +102,7 @@ function ConvertPage() {
   const [alert, setAlert] = useState<AlertMessage | null>(null)
   const [isUploading, setIsUploading] = useState(false)
 
-  // ─── STAGE TARGET CONFIGURATION EXTRACTIONS ───
+  // Stage Targets
   const [stagedFile, setStagedFile] = useState<File | null>(null)
   const [chosenTargetFormat, setChosenTargetFormat] = useState<ConversionTargetFormat>('json')
 
@@ -108,27 +112,44 @@ function ConvertPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Synchronize internal store parsing exceptions straight down onto the AlertMatrix system
+  const isStaticMode = import.meta.env.VITE_API_BASE_URL === 'NO'
+
+  // Synchronize runtime parsing errors down to AlertMatrix
   useEffect(() => {
     if (error) {
       setAlert({ type: 'error', text: error })
     }
   }, [error])
 
-  // ─── STAGE CORRELATION ARCHITECTURE: S3 AUTOMATED PIPELINE ───
+  // ─── ADAPTIVE DATA INGESTION PIPELINE EXECUTION ───
   const processDocumentPipeline = async () => {
     if (!stagedFile) return
     
     setIsUploading(true)
-    setAlert({ type: 'pending', text: 'Initializing conversion tracking metadata matrix...' })
-
+    
     try {
       const preservedFileBlob = stagedFile.slice(0, stagedFile.size, stagedFile.type);
       const stableFilePayload = new File([preservedFileBlob], stagedFile.name, {
         type: stagedFile.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       });
 
-      // 1. Create the base job tracking node anchor using the custom selected choice parameter
+      // ─── OPTION A: HYBRID IN-BROWSER STATIC COMPILER ───
+      if (isStaticMode) {
+        setAlert({ type: 'pending', text: 'Initializing local sandbox thread architecture...' })
+        
+        // Simulates network frame delay for high density UI styling fidelity
+        await new Promise((resolve) => setTimeout(resolve, 700))
+        
+        // Feed the file directly to your client-side data parsing layout store
+        await parseFile(stableFilePayload)
+        setActiveTab(chosenTargetFormat)
+        setAlert({ type: 'success', text: 'Data array compiled natively. Workspace sandbox operational.' })
+        setIsUploading(false)
+        return
+      }
+
+      // ─── OPTION B: PRODUCTION CLOUD S3 PIPELINE ───
+      setAlert({ type: 'pending', text: 'Initializing conversion tracking metadata matrix...' })
       const ext = stableFilePayload.name.split('.').pop()?.toLowerCase() || 'xlsx'
       
       const jobResponse = await api.post('/conversion_jobs', {
@@ -140,9 +161,7 @@ function ConvertPage() {
 
       const registeredJobId = jobResponse.data.id
 
-      // 2. Stream raw binary data directly down onto our unified S3 bucket object action
       setAlert({ type: 'pending', text: 'Streaming binary document packages securely down into S3 storage container...' })
-      
       const multipartPayload = new FormData()
       multipartPayload.append('file', stableFilePayload)
       multipartPayload.append('jobId', registeredJobId)
@@ -150,12 +169,8 @@ function ConvertPage() {
 
       await api.post('/media_objects', multipartPayload)
 
-      // 3. Complete localized parse parsing into the reactive spreadsheet store engine
       await parseFile(stableFilePayload)
-      
-      // Auto toggle navigation tab to match user's intentional pipeline destination format choice
       setActiveTab(chosenTargetFormat)
-
       setAlert({ type: 'success', text: 'Document successfully optimized. Architecture key logs generated on S3 storage.' })
     } catch (err: any) {
       console.error(err)
@@ -168,13 +183,12 @@ function ConvertPage() {
     }
   }
 
-  // Handle local workspace clearing safely
   const handleClearWorkspace = () => {
     setStagedFile(null)
     reset()
   }
 
-  // ─── Drag & Drop Event Handlers ───
+  // Drag & Drop Event Handlers
   const handleDrag = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
@@ -219,7 +233,7 @@ function ConvertPage() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
 
-  // ─── TanStack Table Setup ───
+  // TanStack Table Configuration Maps
   const tableColumns = useMemo(() => {
     return columns
       .filter((col) => !columnExclusions[col])
@@ -251,24 +265,17 @@ function ConvertPage() {
   const table = useReactTable({
     data: rawRows,
     columns: tableColumns,
-    state: {
-      sorting,
-      globalFilter: rowSearch,
-    },
+    state: { sorting, globalFilter: rowSearch },
     onSortingChange: setSorting,
     onGlobalFilterChange: setRowSearch,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: 10,
-      },
-    },
+    initialState: { pagination: { pageSize: 10 } },
   })
 
-  // ─── Computed Exports ───
+  // Computed Text Code Exports
   const generatedSqlCode = useMemo(() => {
     if (!file || rawRows.length === 0) return ''
     return generateSql({
@@ -314,7 +321,7 @@ function ConvertPage() {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch (err) {
-      console.error('Failed to copy', err)
+      console.error('Failed to copy code parameters', err)
     }
   }
 
@@ -357,29 +364,29 @@ function ConvertPage() {
   }, [columns, columnSearch])
 
   return (
-    <div className="space-y-6 text-foreground pb-12 w-full max-w-none relative min-h-[70vh]">
+    <div className="space-y-6 text-foreground pb-12 w-full max-w-none relative min-h-[70vh] text-left">
       
-      {/* ─── DYNAMIC OVERLAY VECTOR ACCENTS ─── */}
+      {/* Dynamic Background Layout Accents */}
       <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
         <div className="absolute right-[-5%] top-[-5%] h-[400px] w-[400px] rounded-full bg-primary/5 blur-3xl" />
         <div className="absolute left-[-10%] bottom-[5%] h-[350px] w-[350px] rounded-full bg-emerald-500/5 blur-3xl" />
       </div>
 
-      {/* ─── UNIFIED PIPELINE ALERTS SYSTEM ─── */}
       <AlertMatrix message={alert} onClose={() => setAlert(null)} />
 
-      {/* ─── USER-FRIENDLY NAVIGATION LOADER WRAPPER ─── */}
       {isLoading || isUploading ? (
-        <div className="flex flex-col min-h-[50vh] w-full items-center justify-center space-y-4 border border-border/40 bg-card/10 rounded-2xl backdrop-blur-md animate-fade-in">
+        <div className="flex flex-col min-h-[50vh] w-full items-center justify-center space-y-4 border border-border/40 bg-card/10 rounded-2xl backdrop-blur-md">
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
           <div className="text-center space-y-1">
             <h3 className="font-black text-sm tracking-tight text-foreground">Executing Asset Conversion Engine</h3>
-            <p className="text-xs text-muted-foreground max-w-xs px-4">Streaming raw boundaries to cloud buckets, initializing tracking logs, and computing schema rules...</p>
+            <p className="text-xs text-muted-foreground max-w-xs px-4">
+              {isStaticMode ? 'Processing rows locally, setting configuration maps, and compiling schemas...' : 'Streaming raw boundaries to cloud buckets, initializing tracking logs, and computing schema rules...'}
+            </p>
           </div>
         </div>
       ) : (
         <>
-          {/* ─── STAGE A: FILE IS NOT LOADED AND NOT STAGED YET ─── */}
+          {/* STAGE A: NO FILE ATTACHED */}
           {!file && !stagedFile && (
             <>
               <section className="rounded-2xl border border-border/40 bg-card/40 p-6 sm:p-8 relative overflow-hidden backdrop-blur-md shadow-xs animate-in fade-in-50 duration-200">
@@ -391,11 +398,11 @@ function ConvertPage() {
                     </div>
                     <h1 className="text-2xl sm:text-4xl font-black tracking-tight leading-none">Convert files in a single workflow</h1>
                     <p className="max-w-2xl text-xs sm:text-sm text-muted-foreground leading-relaxed font-medium">
-                      Select or drop spreadsheets (XLSX, XLS, or CSV), choose your explicit target output format configurations, and initialize real-time S3 cloud optimization maps.
+                      Select or drop spreadsheets (XLSX, XLS, or CSV), choose your explicit target output format configurations, and initialize real-time data optimization maps.
                     </p>
                   </div>
                   <Button
-                    className="w-full sm:w-auto rounded-xl px-6 h-11 text-xs font-bold shrink-0 shadow-lg hover:shadow transition-all"
+                    className="w-full sm:w-auto rounded-xl px-6 h-11 text-xs font-bold shrink-0 shadow-lg hover:shadow transition-all cursor-pointer"
                     onClick={() => fileInputRef.current?.click()}
                   >
                     Select File Channel
@@ -433,7 +440,7 @@ function ConvertPage() {
             </>
           )}
 
-          {/* ─── STAGE B: STAGED CONFIGURATION SELECTOR OPTIONS VIEW (BEFORE PARSING) ─── */}
+          {/* STAGE B: FILE SELECTED - CONFIGURING DESTINATION METRICS */}
           {!file && stagedFile && (
             <Card className="rounded-2xl border border-border/40 bg-card/20 backdrop-blur-md shadow-xl max-w-xl mx-auto p-6 animate-in zoom-in-95 duration-200">
               <div className="space-y-6">
@@ -443,7 +450,7 @@ function ConvertPage() {
                     <h2 className="text-base sm:text-lg font-black tracking-tight truncate text-foreground mt-0.5">{stagedFile.name}</h2>
                     <p className="text-[11px] text-muted-foreground mt-0.5 font-medium">Size Matrix: {formatBytes(stagedFile.size)}</p>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={handleClearWorkspace} className="rounded-xl h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+                  <Button variant="ghost" size="icon" onClick={handleClearWorkspace} className="rounded-xl h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer">
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
@@ -451,7 +458,7 @@ function ConvertPage() {
                 <div className="space-y-3">
                   <Label className="text-[11px] font-black uppercase tracking-wider text-muted-foreground/90">Target Conversion Target Destination</Label>
                   <p className="text-xs text-muted-foreground leading-normal font-medium">
-                    Choose how you want your data structure to transform before initializing S3 streaming and tracking keys execution loops:
+                    Choose how you want your data structure to transform before initializing compile and parsing execution loops:
                   </p>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1.5">
@@ -483,7 +490,7 @@ function ConvertPage() {
                 </div>
 
                 <div className="flex gap-3 pt-2 border-t border-border/20">
-                  <Button variant="outline" onClick={handleClearWorkspace} className="flex-1 rounded-xl h-10 font-bold text-xs border-border/80">
+                  <Button variant="outline" onClick={handleClearWorkspace} className="flex-1 rounded-xl h-10 font-bold text-xs border-border/80 cursor-pointer">
                     Cancel
                   </Button>
                   <Button onClick={processDocumentPipeline} className="flex-1 rounded-xl h-10 font-bold cursor-pointer text-xs bg-primary text-primary-foreground gap-2 shadow-lg">
@@ -495,11 +502,11 @@ function ConvertPage() {
             </Card>
           )}
 
-          {/* ─── STAGE C: CONNECTED ACTIVE INTERACTIVE WORKSPACE CANVAS ─── */}
+          {/* STAGE C: DATA PROCESS COMPLETION - VIEWPORT CANVAS */}
           {file && (
             <div className="space-y-6 w-full animate-in fade-in-40 duration-300">
               
-              {/* CONTROL BAR CONTROL LAYER */}
+              {/* TOP PROFILE CONTROL DASHBOARD CARD */}
               <Card className="rounded-2xl border border-border/40 bg-card/20 backdrop-blur-md shadow-md w-full overflow-hidden">
                 <CardContent className="p-5">
                   <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between w-full">
@@ -521,7 +528,6 @@ function ConvertPage() {
                       </div>
                     </div>
 
-                    {/* Form Controls Row */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:flex md:flex-wrap items-end gap-3.5 w-full lg:w-auto">
                       {sheets.length > 1 && (
                         <div className="flex flex-col gap-1.5 w-full md:w-36">
@@ -549,7 +555,7 @@ function ConvertPage() {
                               key={value}
                               type="button"
                               onClick={() => setDbDialect(value as any)}
-                              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black transition-all whitespace-nowrap ${dbDialect === value ? 'bg-card border border-border/50 text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'}`}
+                              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black transition-all whitespace-nowrap cursor-pointer ${dbDialect === value ? 'bg-card border border-border/50 text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'}`}
                             >
                               <Icon className="h-3 w-3 shrink-0" />
                               <span className="hidden sm:inline">{label}</span>
@@ -558,7 +564,7 @@ function ConvertPage() {
                         </div>
                       </div>
 
-                      <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl shrink-0 ml-auto md:ml-0 border-border/80 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 shadow-xs" title="Clear Workspace" onClick={handleClearWorkspace}>
+                      <Button variant="outline" size="icon" className="h-9 w-9 rounded-xl shrink-0 ml-auto md:ml-0 border-border/80 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 shadow-xs cursor-pointer" title="Clear Workspace" onClick={handleClearWorkspace}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
@@ -567,10 +573,10 @@ function ConvertPage() {
                 </CardContent>
               </Card>
 
-              {/* SPLIT TWO PANEL CANVAS GRID */}
+              {/* TWO PANEL CANVAS CONTENT WORKSPACE SPLIT */}
               <div className="flex flex-col lg:grid lg:grid-cols-[280px_1fr] xl:grid-cols-[320px_1fr] gap-6 items-start w-full">
                 
-                {/* COLUMN SCHEMA CONTEXT SIDEBAR PANEL */}
+                {/* COLUMN FIELD OVERRIDES CONTROLLER BAR MAP */}
                 <Card className="w-full rounded-2xl border border-border/40 bg-card/10 backdrop-blur-md shadow-md h-auto lg:max-h-[650px] overflow-hidden flex flex-col shrink-0">
                   <CardHeader className="p-4 pb-2 border-b border-border/10 bg-muted/20">
                     <div className="flex items-center gap-1.5">
@@ -583,11 +589,9 @@ function ConvertPage() {
                   <CardContent className="p-4 pt-4 space-y-3 overflow-hidden flex flex-col w-full">
                     <div className="relative w-full">
                       <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                      <Input placeholder="Search columns..." value={columnSearch} onChange={(e) => setColumnSearch(e.target.value)} className="h-8 pl-8 text-xs rounded-xl bg-background/50 border-border/60 shadow-xs font-semibold" />
+                      <Input placeholder="Search columns..." value={columnSearch} onChange={(e) => setColumnSearch(e.target.value)} className="h-8 pl-8 text-xs rounded-xl bg-background/50 border-border/60 shadow-xs font-semibold focus-visible:ring-primary/10" />
                       {columnSearch && (
-                        <button onClick={() => setColumnSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-muted">
-                          <X className="h-3 w-3" />
-                        </button>
+                        <button onClick={() => setColumnSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-muted cursor-pointer"><X className="h-3 w-3" /></button>
                       )}
                     </div>
 
@@ -602,11 +606,11 @@ function ConvertPage() {
                           <div key={col} className={`pt-2.5 space-y-1.5 first:pt-0 transition-opacity ${isExcluded ? 'opacity-40' : ''}`}>
                             <div className="flex items-center justify-between gap-2 w-full">
                               <div className="flex items-center gap-2 min-w-0 flex-1">
-                                <input type="checkbox" id={`exclude-${col}`} checked={!isExcluded} onChange={() => toggleColumnExclusion(col)} className="rounded border-border/60 text-primary h-3.5 w-3.5 shrink-0 focus:ring-primary/10" />
+                                <input type="checkbox" id={`exclude-${col}`} checked={!isExcluded} onChange={() => toggleColumnExclusion(col)} className="rounded border-border/60 text-primary h-3.5 w-3.5 shrink-0 focus:ring-primary/10 cursor-pointer" />
                                 <Label htmlFor={`exclude-${col}`} className="text-xs font-bold truncate cursor-pointer select-none text-foreground/90 font-mono" title={col}>{col}</Label>
                               </div>
                               {!isExcluded && (
-                                <button onClick={() => setPrimaryKey(isPK ? null : col)} className={`px-2 py-0.5 rounded-md text-[9px] font-black border transition-all shadow-xs ${isPK ? 'bg-amber-500/10 border-amber-500/30 text-amber-500 font-extrabold' : 'border-border/60 text-muted-foreground bg-background/40 font-bold'}`}>PK</button>
+                                <button onClick={() => setPrimaryKey(isPK ? null : col)} className={`px-2 py-0.5 rounded-md text-[9px] font-black border transition-all shadow-xs cursor-pointer ${isPK ? 'bg-amber-500/10 border-amber-500/30 text-amber-500 font-extrabold' : 'border-border/60 text-muted-foreground bg-background/40 font-bold'}`}>PK</button>
                               )}
                             </div>
                             {!isExcluded && (
@@ -625,10 +629,9 @@ function ConvertPage() {
                   </CardContent>
                 </Card>
 
-                {/* RIGHT MAIN CORE GRID STREAM AND SOURCE WORKSPACE DISPLAY */}
+                {/* RIGHT PANEL DATA RENDER CONTAINER VIEWPORT */}
                 <div className="flex-1 w-full min-w-0 space-y-4">
                   
-                  {/* Custom Formats Navigation Tab Strip */}
                   <div className="flex border-b border-border/40 gap-1.5 overflow-x-auto select-none scrollbar-none pb-px w-full">
                     {[
                       { id: 'preview', label: 'Grid Preview', icon: <TableIcon className="h-3.5 w-3.5" /> },
@@ -641,7 +644,7 @@ function ConvertPage() {
                         key={tab.id}
                         type="button"
                         onClick={() => setActiveTab(tab.id as any)}
-                        className={`flex items-center gap-2 px-4 py-2 border-b-2 text-xs font-black transition-all whitespace-nowrap tracking-wide ${activeTab === tab.id ? 'border-primary text-foreground bg-muted/10 rounded-t-xl font-black' : 'border-transparent text-muted-foreground hover:text-foreground font-bold'}`}
+                        className={`flex items-center gap-2 px-4 py-2 border-b-2 text-xs font-black transition-all whitespace-nowrap tracking-wide cursor-pointer ${activeTab === tab.id ? 'border-primary text-foreground bg-muted/10 rounded-t-xl' : 'border-transparent text-muted-foreground hover:text-foreground'}`}
                       >
                         {tab.icon}
                         <span>{tab.label}</span>
@@ -649,15 +652,15 @@ function ConvertPage() {
                     ))}
                   </div>
 
-                  {/* VIEWPORT NODE A: GRID CONTROLLER */}
+                  {/* TAB PREVIEW RENDER MATRICES */}
                   {activeTab === 'preview' && (
                     <div className="space-y-4 w-full animate-in fade-in-40 duration-200">
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between w-full">
                         <div className="relative w-full sm:max-w-xs">
                           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                          <Input placeholder="Filter spreadsheet records..." value={rowSearch} onChange={(e) => setRowSearch(e.target.value)} className="h-9 pl-8 text-xs rounded-xl bg-card/10 border-border/60 shadow-xs font-semibold focus-visible:ring-primary/10" />
+                          <Input placeholder="Filter records..." value={rowSearch} onChange={(e) => setRowSearch(e.target.value)} className="h-9 pl-8 text-xs rounded-xl bg-card/10 border-border/60 shadow-xs font-semibold focus-visible:ring-primary/10" />
                           {rowSearch && (
-                            <button onClick={() => setRowSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-muted"><X className="h-3.5 w-3.5" /></button>
+                            <button onClick={() => setRowSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-muted cursor-pointer"><X className="h-3.5 w-3.5" /></button>
                           )}
                         </div>
 
@@ -672,13 +675,12 @@ function ConvertPage() {
                         </div>
                       </div>
 
-                      {/* Tabular Flow Matrix Output Grid */}
                       <div className="w-full overflow-x-auto rounded-2xl border border-border/50 bg-card/10 backdrop-blur-xs shadow-md scrollbar-none">
                         <table className="w-full border-collapse text-left text-xs min-w-[500px]">
                           <thead className="bg-muted/30 border-b border-border/40 font-black text-muted-foreground uppercase tracking-wider text-[10px]">
                             {table.getHeaderGroups().map((headerGroup) => (
                               <tr key={headerGroup.id}>
-                                {table.getHeaderGroups()[0].headers.map((header) => (
+                                {headerGroup.headers.map((header) => (
                                   <th key={header.id} colSpan={header.colSpan} className="p-3.5 border-r border-border/10 cursor-pointer hover:bg-muted/40 select-none transition-colors" onClick={header.column.getToggleSortingHandler()}>
                                     <div className="flex items-center gap-1.5 truncate max-w-[120px] font-mono">
                                       {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
@@ -693,7 +695,7 @@ function ConvertPage() {
                             {table.getRowModel().rows.map((row) => (
                               <tr key={row.id} className="hover:bg-muted/5 transition-colors">
                                 {row.getVisibleCells().map((cell) => (
-                                  <td key={cell.id} className="p-3 border-r border-border/10 truncate max-w-[150px] font-mono font-medium text-xs">
+                                  <td key={cell.id} className="p-3 border-r border-border/10 truncate max-w-[150px] font-mono font-medium text-xs text-foreground/90">
                                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                   </td>
                                 ))}
@@ -703,24 +705,23 @@ function ConvertPage() {
                         </table>
                       </div>
 
-                      {/* Grid Pagination Control Row */}
                       {table.getPageCount() > 1 && (
                         <div className="flex items-center justify-between gap-2 pt-2 w-full">
                           <div className="flex items-center gap-1">
-                            <Button variant="outline" size="icon" onClick={() => table.setPageIndex(0)} disabled={!table.getCanPreviousPage()} className="h-7 w-7 rounded-lg border-border/80 shadow-xs"><ChevronsLeft className="h-3.5 w-3.5" /></Button>
-                            <Button variant="outline" size="icon" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()} className="h-7 w-7 rounded-lg border-border/80 shadow-xs"><ChevronLeft className="h-3.5 w-3.5" /></Button>
+                            <Button variant="outline" size="icon" onClick={() => table.setPageIndex(0)} disabled={!table.getCanPreviousPage()} className="h-7 w-7 rounded-lg border-border/80 shadow-xs cursor-pointer"><ChevronsLeft className="h-3.5 w-3.5" /></Button>
+                            <Button variant="outline" size="icon" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()} className="h-7 w-7 rounded-lg border-border/80 shadow-xs cursor-pointer"><ChevronLeft className="h-3.5 w-3.5" /></Button>
                           </div>
                           <span className="text-[11px] font-black text-muted-foreground bg-muted/20 px-2.5 py-0.5 rounded-full border border-border/10 shadow-inner">Page {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}</span>
                           <div className="flex items-center gap-1">
-                            <Button variant="outline" size="icon" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()} className="h-7 w-7 rounded-lg border-border/80 shadow-xs"><ChevronRight className="h-3.5 w-3.5" /></Button>
-                            <Button variant="outline" size="icon" onClick={() => table.setPageIndex(table.getPageCount() - 1)} disabled={!table.getCanNextPage()} className="h-7 w-7 rounded-lg border-border/80 shadow-xs"><ChevronsRight className="h-3.5 w-3.5" /></Button>
+                            <Button variant="outline" size="icon" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()} className="h-7 w-7 rounded-lg border-border/80 shadow-xs cursor-pointer"><ChevronRight className="h-3.5 w-3.5" /></Button>
+                            <Button variant="outline" size="icon" onClick={() => table.setPageIndex(table.getPageCount() - 1)} disabled={!table.getCanNextPage()} className="h-7 w-7 rounded-lg border-border/80 shadow-xs cursor-pointer"><ChevronsRight className="h-3.5 w-3.5" /></Button>
                           </div>
                         </div>
                       )}
                     </div>
                   )}
 
-                  {/* VIEWPORT NODE B: CONVERSION EXPORT LAYER CHANNELS */}
+                  {/* HIGH-DENSITY EXP DATA TEXT TERMINAL OUTPUT VIEW */}
                   {activeTab !== 'preview' && (
                     <div className="space-y-3 w-full animate-in fade-in-40 duration-200">
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between p-4 rounded-2xl border border-border/50 bg-card/10 backdrop-blur-md shadow-md w-full">
@@ -748,23 +749,21 @@ function ConvertPage() {
                           {activeTab === 'csv' && <span className="text-[11px] font-bold text-muted-foreground/80 leading-tight">Formatted with standard double quote escape constraints.</span>}
                         </div>
 
-                        {/* Action utility row buttons */}
                         <div className="flex items-center gap-2 w-full sm:w-auto justify-end border-t border-border/10 pt-3 sm:pt-0 sm:border-none">
-                          <Button variant="outline" onClick={handleCopy} className="flex-1 sm:flex-initial h-8 px-4 rounded-xl text-[11px] font-black gap-1.5 border-border/80 shadow-xs">
+                          <Button variant="outline" onClick={handleCopy} className="flex-1 sm:flex-initial h-8 px-4 rounded-xl text-[11px] font-black gap-1.5 border-border/80 shadow-xs cursor-pointer">
                             {copied ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
                             <span>{copied ? 'Copied!' : 'Copy Code'}</span>
                           </Button>
-                          <Button onClick={handleDownload} className="flex-1 sm:flex-initial h-8 px-4 rounded-xl text-[11px] font-black gap-1.5 bg-primary text-primary-foreground shadow-md hover:shadow transition-all">
+                          <Button onClick={handleDownload} className="flex-1 sm:flex-initial h-8 px-4 rounded-xl text-[11px] font-black gap-1.5 bg-primary text-primary-foreground shadow-md hover:shadow transition-all cursor-pointer">
                             <Download className="h-3 w-3" />
                             <span>Download</span>
                           </Button>
                         </div>
                       </div>
 
-                      {/* High Density Code Block Terminal Stage View */}
                       <div className="relative rounded-2xl border border-border/60 bg-zinc-950 p-5 shadow-2xl overflow-hidden">
                         <div className="absolute top-2 right-3 text-[9px] font-mono text-zinc-600 uppercase font-black select-none">{activeTab} sandbox</div>
-                        <pre className="font-mono text-[11px] text-zinc-300 overflow-auto max-h-[400px] lg:max-h-[500px] whitespace-pre-wrap select-all RegalScroll leading-relaxed scrollbar-none pr-2">
+                        <pre className="font-mono text-[11px] text-zinc-300 overflow-auto max-h-[400px] lg:max-h-[500px] whitespace-pre-wrap select-all leading-relaxed pr-2 text-left">
                           {activeCodeContent}
                         </pre>
                       </div>

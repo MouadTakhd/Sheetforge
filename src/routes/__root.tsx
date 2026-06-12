@@ -1,4 +1,3 @@
-// src/routes/__root.tsx
 import { createRootRoute, Outlet, useRouter } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { useEffect, useState } from 'react'
@@ -11,7 +10,7 @@ export const Route = createRootRoute({
 })
 
 function RootComponent() {
-  const router = useRouter() //   GAIN DIRECT ACCESS TO THE ROUTER RUNTIME STATE
+  const router = useRouter() // Gain direct access to the router runtime state
   const authenticatedUser = useAuth((state) => state.user)
   const isAuthenticated = useAuth((state) => state.isAuthenticated)
   const fetchMe = useAuth((state) => state.fetchMe)
@@ -19,39 +18,47 @@ function RootComponent() {
   const token = localStorage.getItem('sheetforge_jwt_token')
   const [isHydrating, setIsHydrating] = useState(true)
 
+  const isStaticMode = import.meta.env.VITE_API_BASE_URL === 'NO'
+
   // ─── THE SYSTEM HYDRATION GUARD ───
   useEffect(() => {
     const syncSessionState = async () => {
+      // If running the offline static sandbox, bypass server handshake pipelines instantly
+      if (isStaticMode) {
+        setIsHydrating(false)
+        return
+      }
+
       if (token && !authenticatedUser) {
         await fetchMe()
       }
       setIsHydrating(false)
     }
     void syncSessionState()
-  }, [token])
+  }, [token, isStaticMode])
 
-  // ─── THE CRITICAL LOGIN BUG FIX ───
-  // Whenever the authentication store flips to TRUE, instantly invalidate the 
-  // router cache metrics. This forces the navbar to snap onto the screen immediately!
+  // ─── THE CRITICAL NAV FLICKER BUG FIX ───
   useEffect(() => {
-    if (isAuthenticated && authenticatedUser) {
+    if ((isStaticMode || (isAuthenticated && authenticatedUser))) {
       void router.invalidate()
     }
-  }, [isAuthenticated, authenticatedUser, router])
+  }, [isAuthenticated, authenticatedUser, router, isStaticMode])
 
-  if (isHydrating && token) {
+  // Only display the loading blackout spinner if we are hitting a live server environment
+  if (!isStaticMode && isHydrating && token) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-background text-foreground">
+      <div className="flex h-screen w-screen items-center justify-center bg-background text-foreground select-none">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
-          <p className="font-mono text-xs tracking-widest text-muted-foreground uppercase">Synchronizing user environment...</p>
+          <p className="font-mono text-xs tracking-widest text-muted-foreground uppercase">Synchronizing cloud user environment...</p>
         </div>
       </div>
     )
   }
 
-  // Combine store state variables to handle the layout switch safely
-  const isUserLoggedIn = !!token && isAuthenticated && !!authenticatedUser
+  // ─── DYNAMIC CORE LAYOUT VIEWPORT MATRIX SWITCH ───
+  // In static mode, we bypass authentication checks to lock the core interface shell open from launch
+  const isUserLoggedIn = isStaticMode || (!!token && isAuthenticated && !!authenticatedUser)
 
   return (
     <>
