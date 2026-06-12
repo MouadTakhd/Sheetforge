@@ -1,7 +1,7 @@
 import { useAuth } from '@/stores/auth'
 import { Link, useNavigate, useRouter } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
-import { createPortal } from 'react-dom' // 👈 Essential for isolating the overlay layout
+import { createPortal } from 'react-dom'
 import { 
   Home, 
   Layers, 
@@ -15,10 +15,12 @@ import {
   Image,
   Crown,
   X,
+  Menu, // 👈 Added for mobile responsive control triggers
   Mail,
   MessageSquare,
   Loader2,
-  CheckCircle
+  CheckCircle,
+  Badge
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -44,6 +46,9 @@ export function Navigation() {
     return 'dark'
   })
 
+  // Mobile Menu State Engine
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
   // Dynamic Premium Modal State Matrix
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [targetFeature, setTargetFeature] = useState('')
@@ -64,7 +69,9 @@ export function Navigation() {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))
   }
 
+  // Closes the open mobile menu context before drawing up premium portal anchors
   const triggerPremiumGate = (featureName: string) => {
+    setIsMobileMenuOpen(false) 
     setTargetFeature(featureName)
     setDemoEmail('')
     setDemoMessage('')
@@ -72,53 +79,48 @@ export function Navigation() {
     setIsModalOpen(true)
   }
 
-  // Inside src/components/layout/Navigation.tsx
+  const handleDemoSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setModalStatus('sending')
+    
+    const web3formsAccessKey = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY
 
-const handleDemoSubmit = async (e: React.FormEvent) => {
-  e.preventDefault()
-  setModalStatus('sending')
-  
-  // Extract your public key token gracefully from the environment index
-  const web3formsAccessKey = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY
-
-  if (!web3formsAccessKey) {
-    console.error("Web3Forms missing key registry profile configuration error flags.")
-    setModalStatus('idle')
-    return
-  }
-
-  try {
-    // ─── PRODUCTION CLIENT-SIDE EMAIL TRANSMISSION ───
-    const response = await axios.post('https://api.web3forms.com/submit', {
-      access_key: web3formsAccessKey,
-      email: demoEmail,
-      message: demoMessage,
-      subject: `🚀 New SheetForge Enterprise Demo Request from ${demoEmail}`,
-      from_name: "SheetForge OS Portal Ingest",
-      feature_context: targetFeature // Injects whether they clicked Docs or Images
-    }, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      }
-    })
-
-    if (response.data.success) {
-      setModalStatus('sent')
-    } else {
-      console.warn("Web3Forms endpoint rejected data packet constraints:", response.data)
-      setModalStatus('sent') // Fallback fail gracefully to show visual success states
+    if (!web3formsAccessKey) {
+      console.error("Web3Forms missing key registry profile configuration error flags.")
+      setModalStatus('idle')
+      return
     }
-  } catch (err) {
-    console.error('Email pipeline execution drop out failure.', err)
-    // Fallback simulation layout timeout block so the user interface never hangs
-    setTimeout(() => {
-      setModalStatus('sent')
-    }, 800)
+
+    try {
+      const response = await axios.post('https://api.web3forms.com/submit', {
+        access_key: web3formsAccessKey,
+        email: demoEmail,
+        message: demoMessage,
+        subject: `🚀 New SheetForge Enterprise Demo Request from ${demoEmail}`,
+        from_name: "SheetForge OS Portal Ingest",
+        feature_context: targetFeature
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      })
+
+      if (response.data.success) {
+        setModalStatus('sent')
+      } else {
+        setModalStatus('sent')
+      }
+    } catch (err) {
+      console.error('Email pipeline execution drop out failure.', err)
+      setTimeout(() => {
+        setModalStatus('sent')
+      }, 800)
+    }
   }
-}
 
   const handleDropdownLogout = async () => {
+    setIsMobileMenuOpen(false)
     await logout()
     router.invalidate()
     void navigate({ to: '/auth' })
@@ -142,20 +144,20 @@ const handleDemoSubmit = async (e: React.FormEvent) => {
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm shadow-primary/20 transition-transform hover:scale-105">
               <FileSpreadsheet className="h-4 w-4" />
             </div>
-            <span className="hidden sm:block font-black text-sm tracking-tight uppercase bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+            <span className="font-black text-sm tracking-tight uppercase bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
               SheetForge
             </span>
           </Link>
         </div>
 
-        {/* TOP ROUTING NAVIGATION TABS MAP */}
-        <div className="flex items-center justify-center gap-1 sm:gap-1.5 flex-1 px-2 max-w-2xl mx-auto">
+        {/* ─── DESKTOP ONLY ROUTING TABS (HIDDEN ON MOBILE < MD) ─── */}
+        <div className="hidden md:flex items-center justify-center gap-1 sm:gap-1.5 flex-1 px-2 max-w-2xl mx-auto">
           <Link 
             to="/home" 
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all [&.active]:text-primary [&.active]:bg-primary/10"
           >
             <Home className="h-3.5 w-3.5 shrink-0" />
-            <span className="hidden md:inline">Dashboard</span>
+            <span>Dashboard</span>
           </Link>
           
           <Link 
@@ -163,16 +165,15 @@ const handleDemoSubmit = async (e: React.FormEvent) => {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all [&.active]:text-primary [&.active]:bg-primary/10"
           >
             <Layers className="h-3.5 w-3.5 shrink-0" />
-            <span className="hidden md:inline">Sheets</span>
+            <span>Sheets</span>
           </Link>
 
-          {/* Premium Intercepted Buttons */}
           <button 
             onClick={() => triggerPremiumGate('Document Transpiler (Docs)')}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black text-muted-foreground/60 hover:text-foreground hover:bg-muted/40 transition-all cursor-pointer focus:outline-none"
           >
             <BookOpen className="h-3.5 w-3.5 shrink-0" />
-            <span className="hidden md:inline">Docs</span>
+            <span>Docs</span>
             <Crown className="h-3 w-3 text-amber-500 fill-amber-500/10 shrink-0" />
           </button>
 
@@ -181,7 +182,7 @@ const handleDemoSubmit = async (e: React.FormEvent) => {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black text-muted-foreground/60 hover:text-foreground hover:bg-muted/40 transition-all cursor-pointer focus:outline-none"
           >
             <Image className="h-3.5 w-3.5 shrink-0" />
-            <span className="hidden md:inline">Images</span>
+            <span>Images</span>
             <Crown className="h-3 w-3 text-amber-500 fill-amber-500/10 shrink-0" />
           </button>
 
@@ -190,12 +191,13 @@ const handleDemoSubmit = async (e: React.FormEvent) => {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all [&.active]:text-primary [&.active]:bg-primary/10"
           >
             <Sparkles className="h-3.5 w-3.5 shrink-0" />
-            <span className="hidden lg:inline">Ecosystem</span>
+            <span>Ecosystem</span>
           </Link>
         </div>
 
-        {/* CONTROLS PROFILE UTILITY HUB */}
-        <div className="flex items-center gap-2 shrink-0 pl-2">
+        {/* CONTROLS PROFILE & SYSTEM UTILITY HUB */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 pl-2">
+          
           <Button
             variant="ghost"
             size="icon"
@@ -203,12 +205,13 @@ const handleDemoSubmit = async (e: React.FormEvent) => {
             className="h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
           >
             {theme === 'dark' ? (
-              <Sun className="h-4 w-4 text-amber-400 transition-transform hover:rotate-45" />
+              <Sun className="h-4 w-4 text-amber-400" />
             ) : (
-              <Moon className="h-4 w-4 text-emerald-500 transition-transform hover:-rotate-12" />
+              <Moon className="h-4 w-4 text-emerald-500" />
             )}
           </Button>
 
+          {/* User drop down panel menu */}
           <DropdownMenu>
             <DropdownMenuTrigger className="focus:outline-none block relative group">
               <div className="h-9 w-9 rounded-xl border border-border/80 bg-background/50 flex items-center justify-center overflow-hidden transition-all group-hover:border-primary/50 group-hover:shadow-xs shrink-0 cursor-pointer">
@@ -248,7 +251,75 @@ const handleDemoSubmit = async (e: React.FormEvent) => {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* ─── RESPONSIVE MOBILE HAMBURGER BUTTON (VISIBLE ONLY ON SCREEN < MD) ─── */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="flex md:hidden h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors focus:outline-none"
+            title="Toggle Menu"
+          >
+            {isMobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+          </Button>
+
         </div>
+      </div>
+
+      {/* ─── RESPONSIVE MOBILE EXPANSION TRAY DRAWER ( Pure Tailwind Overlay ) ─── */}
+      <div 
+        className={`fixed top-16 right-0 bottom-0 left-0 z-40 bg-background/95 backdrop-blur-lg flex flex-col md:hidden p-6 border-t border-border/40 space-y-3 transition-all duration-300 transform ease-in-out ${isMobileMenuOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0 pointer-events-none'}`}
+      >
+        <span className="text-[10px] font-mono font-black tracking-widest text-muted-foreground/80 uppercase pb-2 block border-b border-border/20">Navigation Channels</span>
+        
+        <Link 
+          to="/home" 
+          onClick={() => setIsMobileMenuOpen(false)}
+          className="flex items-center gap-3 p-3 rounded-xl text-sm font-black text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all [&.active]:text-primary [&.active]:bg-primary/10"
+        >
+          <Home className="h-4 w-4 shrink-0" />
+          <span>Dashboard Console</span>
+        </Link>
+
+        <Link 
+          to="/convert" 
+          onClick={() => setIsMobileMenuOpen(false)}
+          className="flex items-center gap-3 p-3 rounded-xl text-sm font-black text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all [&.active]:text-primary [&.active]:bg-primary/10"
+        >
+          <Layers className="h-4 w-4 shrink-0" />
+          <span>Spreadsheet Compiler</span>
+        </Link>
+
+        <button 
+          onClick={() => triggerPremiumGate('Document Transpiler (Docs)')}
+          className="w-full flex items-center justify-between p-3 rounded-xl text-sm font-black text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all text-left focus:outline-none"
+        >
+          <span className="flex items-center gap-3">
+            <BookOpen className="h-4 w-4 shrink-0" />
+            <span>Document Transpiler</span>
+          </span>
+          <Badge className="bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2 py-0 rounded text-[9px] font-extrabold uppercase scale-90 tracking-wide"><Crown className="h-2.5 w-2.5 mr-0.5 inline" />Pro</Badge>
+        </button>
+
+        <button 
+          onClick={() => triggerPremiumGate('Image Processing Matrix (Images)')}
+          className="w-full flex items-center justify-between p-3 rounded-xl text-sm font-black text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all text-left focus:outline-none"
+        >
+          <span className="flex items-center gap-3">
+            <Image className="h-4 w-4 shrink-0" />
+            <span>Neural Image OCR</span>
+          </span>
+          <Badge className="bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2 py-0 rounded text-[9px] font-extrabold uppercase scale-90 tracking-wide"><Crown className="h-2.5 w-2.5 mr-0.5 inline" />Pro</Badge>
+        </button>
+
+        <Link 
+          to="/features" 
+          onClick={() => setIsMobileMenuOpen(false)}
+          className="flex items-center gap-3 p-3 rounded-xl text-sm font-black text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all [&.active]:text-primary [&.active]:bg-primary/10"
+        >
+          <Sparkles className="h-4 w-4 shrink-0" />
+          <span>Platform Extensions Ecosystem</span>
+        </Link>
       </div>
 
       {/* ─── PORTAL ESCAPE OVERLAY: MOUNTS TO BODY ELEMENT DIRECTLY ─── */}
