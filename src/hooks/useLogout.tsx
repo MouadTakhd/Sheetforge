@@ -1,16 +1,16 @@
 // src/hooks/useAuth.ts
-import { Navigate } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { useAuth } from '@/stores/auth'
 
 export function useLogout() {
   const clearAuth = useAuth(s => s.logout)
+  const navigate = useNavigate()
 
   return async () => {
-    await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {})
+    // clearAuth (store logout) already POSTs /logout via the axios client
+    // (baseURL `${VITE_API_BASE_URL}` -> .../api/logout) and clears the token.
+    await clearAuth()
 
-    localStorage.removeItem('sheetforge_jwt_token')
-    clearAuth()
-
-    Navigate({ to: '/auth' })
+    void navigate({ to: '/auth' })
   }
 }

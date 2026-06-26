@@ -16,10 +16,12 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('sheetforge_jwt_token')
-      
-      // Hard reload if you want an absolute clean global state eviction,
-      // or let TanStack Router's beforeLoad handle the next navigation block safely
-    navigate({to:'/auth'})
+
+      // This module isn't a React component, so router hooks aren't available here.
+      // Hard-redirect for a clean global state eviction (guard SSR / already on /auth).
+      if (typeof window !== 'undefined' && window.location.pathname !== '/auth') {
+        window.location.assign('/auth')
+      }
     }
     return Promise.reject(error)
   }
