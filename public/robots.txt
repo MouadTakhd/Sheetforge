@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /$
+Allow: /auth
+# App is authentication-gated; don't waste crawl budget on app routes
+# that redirect to the login wall.
+Disallow: /home
+Disallow: /app
+Disallow: /jobs
+Disallow: /core
+Disallow: /convert
+Disallow: /word
+Disallow: /image
+
+Sitemap: https://sheetforge.vercel.app/sitemap.xml
