@@ -9,7 +9,7 @@ if (import.meta.env.VITE_APP_NAME) {
   document.title = import.meta.env.VITE_APP_NAME;
 }
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <ThemeProvider defaultTheme="dark">
+  <ThemeProvider defaultTheme="system">
   <React.StrictMode>
     <App />
   </React.StrictMode>

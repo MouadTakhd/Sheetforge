@@ -4,21 +4,23 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Mail, Lock, Eye, EyeOff, Loader2, Sparkles, AlertCircle, Check, X } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, Loader2, AlertCircle, Check, X } from 'lucide-react'
 import axios from 'axios'
 import api from '@/lib/api'
+import { useAuth } from '@/stores/auth'
 
 interface SignUpProps {
   onSignUpSuccess: (email: string) => void
 }
 
 export function SignUpForm({ onSignUpSuccess }: SignUpProps) {
+  const login = useAuth((s) => s.login)
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [form, setForm] = useState({ email: '', password: '', firstName: '', lastName: '' })
 
-  // Real-time conditional security verification rules
+  // Live password strength checks shown under the field.
   const passwordRules = {
     length: form.password.length >= 8,
     hasUpper: /[A-Z]/.test(form.password),
@@ -36,41 +38,53 @@ export function SignUpForm({ onSignUpSuccess }: SignUpProps) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!form.email || !form.password || !form.firstName || !form.lastName) {
-      setError('All mapping identifiers are explicitly required.')
+      setError('Please fill in all fields.')
       return
     }
 
     if (!isPasswordValid) {
-      setError('Password infrastructure metrics fail security baseline.')
+      setError("Your password doesn't meet the requirements below.")
       return
     }
 
     setIsLoading(true)
+
+    // Step 1: create the account.
     try {
-      // Calls your Symfony API Endpoint configuration route context
       await api.post('/users', {
         email: form.email,
         plainPassword: form.password,
         firstName: form.firstName,
         lastName: form.lastName,
       })
-
-      // Shift operation focus straight to the OTP code verification interface row
-      onSignUpSuccess(form.email)
     } catch (err: unknown) {
-  if (axios.isAxiosError(err) && err.response) {
-    // API Platform sends detailed validation errors inside violations or description arrays
-    const violations = err.response.data.violations;
-    
-    if (violations && violations.length > 0) {
-      setError(`${violations[0].propertyPath}: ${violations[0].message}`);
-    } else {
-      setError(err.response.data.detail || err.response.data.message || 'Identity context conflict error.');
+      if (axios.isAxiosError(err) && err.response) {
+        // API Platform sends detailed validation errors inside `violations`.
+        const violations = err.response.data.violations
+        if (violations && violations.length > 0) {
+          setError(`${violations[0].propertyPath}: ${violations[0].message}`)
+        } else {
+          setError(err.response.data.detail || err.response.data.message || 'Could not create your account.')
+        }
+      } else {
+        setError("Couldn't reach the server. Please try again.")
+      }
+      setIsLoading(false)
+      return
     }
-  } else {
-    setError('Network pipeline drop out.');
-  }
-} finally {
+
+    // Step 2: account created — log in automatically so the user lands in the app.
+    try {
+      const { data } = await api.post('/login_check', {
+        email: form.email,
+        password: form.password,
+      })
+      login(data.token)
+      onSignUpSuccess(form.email)
+    } catch {
+      // Account exists but auto-login failed; ask them to sign in manually.
+      setError('Account created! Please sign in with your new credentials.')
+    } finally {
       setIsLoading(false)
     }
   }
@@ -97,7 +111,7 @@ export function SignUpForm({ onSignUpSuccess }: SignUpProps) {
 
       <div className="space-y-1.5">
         <Label htmlFor="password" className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-          <Lock className="h-3.5 w-3.5" /> Password Configuration
+          <Lock className="h-3.5 w-3.5" /> Password
         </Label>
         <div className="relative flex items-center">
           <Input
@@ -116,10 +130,9 @@ export function SignUpForm({ onSignUpSuccess }: SignUpProps) {
         </div>
       </div>
 
-      {/* Visual Real-Time Password Verification Indicator Grid */}
       {form.password.length > 0 && (
         <div className="p-3 bg-muted/40 rounded-lg border border-border/40 text-[11px] space-y-1.5 animate-in slide-in-from-top-2 duration-200">
-          <p className="font-bold text-muted-foreground uppercase tracking-wide text-[9px]">Security Requirements Matrix:</p>
+          <p className="font-bold text-muted-foreground uppercase tracking-wide text-[9px]">Password must include:</p>
           <div className="grid grid-cols-2 gap-2 font-medium">
             <div className={`flex items-center gap-1.5 ${passwordRules.length ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground'}`}>
               {passwordRules.length ? <Check className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />} At least 8 characters
@@ -145,8 +158,8 @@ export function SignUpForm({ onSignUpSuccess }: SignUpProps) {
       )}
 
       <Button type="submit" disabled={isLoading || !isPasswordValid} className="w-full h-10 gap-2 text-xs font-bold bg-primary text-primary-foreground shadow-sm">
-        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-        <span>Register Workspace Platform</span>
+        {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+        <span>{isLoading ? 'Creating account…' : 'Create account'}</span>
       </Button>
     </form>
   )

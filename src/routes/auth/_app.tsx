@@ -6,13 +6,9 @@ import { SignInForm } from '@/components/auth/SignIn'
 import { SignUpForm } from '@/components/auth/SignUp'
 
 export const Route = createFileRoute('/auth/_app')({
-  // ─── PURE ANTI-GLITCH LIFECYCLE ROUTE GUARD ───
+  // Already signed in? Skip the auth screen.
   beforeLoad: () => {
-    const activeSessionToken = localStorage.getItem('sheetforge_jwt_token')
-    
-    // If an active session payload exists, abort the mount phase 
-    // immediately and forward the user to their workspace natively
-    if (activeSessionToken) {
+    if (localStorage.getItem('sheetforge_jwt_token')) {
       throw redirect({ to: '/home' })
     }
   },
@@ -20,32 +16,31 @@ export const Route = createFileRoute('/auth/_app')({
 })
 
 const FEATURES = [
-  { icon: Zap, label: 'Fast & Reliable Conversion', iconClass: 'text-amber-500' },
-  { icon: ShieldCheck, label: 'Bank-Grade Layer Security', iconClass: 'text-emerald-500' },
-  { icon: Wand2, label: 'Tailored Native Configs', iconClass: 'text-indigo-500' },
+  { icon: Zap, label: 'Fast, reliable conversion', iconClass: 'text-amber-500' },
+  { icon: ShieldCheck, label: 'Your files stay private', iconClass: 'text-emerald-500' },
+  { icon: Wand2, label: 'Flexible field mapping', iconClass: 'text-indigo-500' },
 ] as const
 
 export function AuthPage() {
-  // ─── SYNCHRONOUS RENDER SEO TITLE SETTER ───
   if (typeof document !== 'undefined') {
-    document.title = 'Secure Infrastructure Access Gateway | Sheetforge'
+    document.title = 'Sign in | Sheetforge'
   }
 
   const [mode, setMode] = useState<'signin' | 'signup'>('signin')
-  const { theme, setTheme } = useTheme()
+  const { resolvedTheme, setTheme } = useTheme()
   const navigate = useNavigate()
 
-  const handleAuthPipelineSuccess = () => {
+  const handleSignUpSuccess = () => {
     void navigate({ to: '/home' })
   }
 
   return (
     <main className="min-h-screen w-full flex bg-background text-foreground md:overflow-hidden font-sans relative">
       
-      {/* ─── LEFT SIDE: INTERACTIVE FORM CONTAINER NODE ─── */}
+      {/* Left: auth form */}
       <section className="w-full md:w-[50%] lg:w-[45%] xl:w-[38%] min-h-screen md:h-screen flex flex-col justify-between p-6 sm:p-10 lg:p-14 bg-background border-r border-border/40 shrink-0 relative z-10 overflow-y-auto">
         
-        {/* Top Header Row Identity Components */}
+        {/* Logo + theme toggle */}
         <div className="flex items-center justify-between w-full mb-8 md:mb-0 select-none">
           <div className="flex items-center gap-2 md:opacity-0 pointer-events-none transition-opacity">
             <div className="flex items-center justify-center p-1.5 rounded-lg bg-primary text-primary-foreground">
@@ -55,28 +50,28 @@ export function AuthPage() {
           </div>
           
           <button
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
             className="flex items-center justify-center h-8 w-8 rounded-lg border border-border/60 bg-background hover:bg-muted/50 transition-colors"
-            aria-label="Toggle structural interface theme"
+            aria-label={resolvedTheme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
           >
-            {theme === 'dark' ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-primary" />}
+            {resolvedTheme === 'dark' ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-primary" />}
           </button>
         </div>
 
-        {/* Central Authorization Interaction Viewport */}
+        {/* Form */}
         <div className="w-full my-auto space-y-6 max-w-[420px] mx-auto py-4 sm:py-6">
           <div className="space-y-2">
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight leading-none">
-              {mode === 'signin' ? 'Welcome back 👋' : 'Create an account ✨'}
+              {mode === 'signin' ? 'Welcome back' : 'Create your account'}
             </h1>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              {mode === 'signin' 
-                ? 'Enter your credentials to manage workspace files.' 
-                : 'Get started with automated document mapping layers.'}
+              {mode === 'signin'
+                ? 'Sign in to convert and manage your documents.'
+                : 'Sign up to start converting your spreadsheets and documents.'}
             </p>
           </div>
 
-          {/* Segmented Controller Mode Switcher */}
+          {/* Sign in / Sign up switch */}
           <div className="flex p-1 rounded-xl bg-muted/50 border border-border/30 w-full shadow-xs select-none">
             <button
               type="button"
@@ -94,17 +89,16 @@ export function AuthPage() {
             </button>
           </div>
 
-          {/* Dynamic Core Form Mounting Target */}
           <div className="w-full overflow-x-hidden">
             {mode === 'signin' ? (
               <SignInForm />
             ) : (
-              <SignUpForm onSignUpSuccess={handleAuthPipelineSuccess} />
+              <SignUpForm onSignUpSuccess={handleSignUpSuccess} />
             )}
           </div>
         </div>
 
-        {/* Bottom Navigation Toggle Row Footer */}
+        {/* Footer switch link */}
         <div className="text-center pt-6 md:pt-4 border-t border-border/30 w-full max-w-[420px] mx-auto mt-8 md:mt-0 select-none">
           <p className="text-xs text-muted-foreground font-medium">
             {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
@@ -119,7 +113,7 @@ export function AuthPage() {
         </div>
       </section>
 
-      {/* ─── RIGHT SIDE: BRANDING GRID WALL (DESKTOP ONLY) ─── */}
+      {/* Right: brand panel (desktop only) */}
       <section className="hidden md:flex flex-1 flex-col justify-between p-12 lg:p-16 bg-muted/10 relative overflow-hidden select-none">
         
         <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
@@ -143,10 +137,10 @@ export function AuthPage() {
 
         <div className="relative z-10 max-w-xl my-auto space-y-4 pr-4">
           <h2 className="text-3xl lg:text-4xl xl:text-5xl font-black tracking-tight leading-[1.15]">
-            Transform complex spreadsheets into structured asset frameworks.
+            Turn messy spreadsheets into clean, structured data.
           </h2>
           <p className="text-muted-foreground text-xs lg:text-sm leading-relaxed max-w-sm">
-            Automate processing configs, map properties fluidly, and maintain reliable document history records.
+            Convert and map Excel and Word files, then keep a clear history of every job.
           </p>
         </div>
 

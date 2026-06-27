@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Mail, Lock, Eye, EyeOff, Loader2, Sparkles, AlertCircle } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react'
 import axios from 'axios'
 import api from '@/lib/api'
 
@@ -42,7 +42,7 @@ export function SignInForm() {
       if (axios.isAxiosError(err) && err.response) {
         setError(err.response.data.message || 'Invalid email or password.')
       } else {
-        setError('Could not establish connection with gateway.')
+        setError("Couldn't reach the server. Please try again.")
       }
     } finally {
       setIsLoading(false)
@@ -55,7 +55,7 @@ export function SignInForm() {
 
       <div className="relative flex py-1 items-center">
         <div className="grow border-t border-border/60"></div>
-        <span className="shrink mx-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Or credentials</span>
+        <span className="shrink mx-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">or sign in with email</span>
         <div className="grow border-t border-border/60"></div>
       </div>
 
@@ -124,8 +124,8 @@ export function SignInForm() {
           disabled={isLoading}
           className="w-full h-10 gap-2 text-xs font-bold bg-primary hover:bg-primary/95 text-primary-foreground shadow-sm transition-all"
         >
-          {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-          <span>{isLoading ? 'Authenticating…' : 'Sign In to Workspace'}</span>
+          {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+          <span>{isLoading ? 'Signing in…' : 'Sign in'}</span>
         </Button>
       </form>
     </div>
